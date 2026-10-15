@@ -23,3 +23,4 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+console.log('nimeverse v1.0.2')
