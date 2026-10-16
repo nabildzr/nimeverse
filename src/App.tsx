@@ -10,6 +10,16 @@ const AnimeList = lazy(() => import('./pages/AnimeList'))
 const AZList = lazy(() => import('./pages/AZList'))
 const Schedule = lazy(() => import('./pages/Schedule'))
 const Genres = lazy(() => import('./pages/Genres'))
+const Login = lazy(() => import('./pages/Login'))
+const Settings = lazy(() => import('./pages/Settings'))
+const Premium = lazy(() => import('./pages/Premium'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Watchlist = lazy(() => import('./pages/Watchlist'))
+const Badges = lazy(() => import('./pages/Badges'))
+const Leaderboard = lazy(() => import('./pages/Leaderboard'))
+const Communities = lazy(() => import('./pages/Communities'))
+const Community = lazy(() => import('./pages/Community'))
+const PostPage = lazy(() => import('./pages/PostPage'))
 
 export default function App() {
   return (
@@ -24,6 +34,16 @@ export default function App() {
         <Route path="genres/:slug" element={<AnimeList mode="genre" />} />
         <Route path="az-list" element={<AZList />} />
         <Route path="jadwal" element={<Schedule />} />
+        <Route path="masuk" element={<Login />} />
+        <Route path="pengaturan" element={<Settings />} />
+        <Route path="premium" element={<Premium />} />
+        <Route path="profil/:name" element={<Profile />} />
+        <Route path="watchlist" element={<Watchlist />} />
+        <Route path="lencana" element={<Badges />} />
+        <Route path="peringkat" element={<Leaderboard />} />
+        <Route path="komunitas" element={<Communities />} />
+        <Route path="komunitas/post/:id" element={<PostPage />} />
+        <Route path="komunitas/:slug" element={<Community />} />
         {/* /{slug}-episode-{n}; unmatched paths render NotFound inside Watch. */}
         <Route path=":watchSlug" element={<Watch />} />
         <Route path="*" element={<Watch />} />

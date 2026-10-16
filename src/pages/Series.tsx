@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bookmark, BookmarkCheck, Youtube } from 'lucide-react'
+import { Youtube } from 'lucide-react'
 import { api } from '../api/client'
+import { Comments } from '../components/Comments'
+import { ListButton } from '../components/ListButton'
 import { AltTitles, GenreTags, InfoFacts } from '../components/AnimeInfo'
 import { Box } from '../components/Box'
 import { AnimeCardItem, CardGrid } from '../components/Cards'
@@ -12,7 +14,7 @@ import { Poster } from '../components/Poster'
 import { Sidebar } from '../components/Sidebar'
 import { ErrorView, PageLoader } from '../components/States'
 import { countdown, watchPath } from '../lib/format'
-import { getBookmarks, lastWatched, toggleBookmark } from '../lib/history'
+import { lastWatched } from '../lib/history'
 import { useTitle } from '../lib/useTitle'
 
 export default function Series() {
@@ -22,7 +24,6 @@ export default function Series() {
     queryFn: ({ signal }) => api.detail(slug, signal),
     staleTime: 120_000,
   })
-  const [bookmarked, setBookmarked] = useState(() => getBookmarks().includes(slug))
   const [showTrailer, setShowTrailer] = useState(false)
   useTitle(data ? `Nonton ${data.anime.title} Subtitle Indonesia` : '')
 
@@ -50,13 +51,7 @@ export default function Series() {
                   <Youtube className="h-4 w-4" /> Trailer
                 </button>
               )}
-              <button
-                onClick={() => setBookmarked(toggleBookmark(slug))}
-                className="flex h-[35px] items-center justify-center gap-1.5 rounded-[5px] bg-nav text-[13px] text-white hover:bg-accent"
-              >
-                {bookmarked ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                {bookmarked ? 'Bookmarked' : 'Bookmark'}
-              </button>
+              <ListButton slug={slug} />
             </div>
           </div>
           <div className="min-w-0 flex-1">
@@ -104,6 +99,8 @@ export default function Series() {
         )}
         <EpisodeList slug={slug} title={anime.title} episodes={episodes} />
       </Box>
+
+      <Comments target={{ anime: slug }} title="Diskusi" />
 
       {recommendations.length > 0 && (
         <Box title="Recommended Series">

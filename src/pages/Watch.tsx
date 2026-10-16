@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, LayoutGrid, Lightbulb, Maximize2, Minimize2, Monitor, PlayCircle } from 'lucide-react'
-import { api } from '../api/client'
+import { Check, ChevronLeft, ChevronRight, LayoutGrid, Lightbulb, Maximize2, Minimize2, Monitor, PlayCircle } from 'lucide-react'
+import { accountApi, api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
+import { Comments } from '../components/Comments'
+import { useToasts } from '../components/Toasts'
+import { useProgress, type PlayerMode } from '../lib/useProgress'
 import type { WatchData } from '../api/types'
 import { AltTitles, GenreTags, InfoFacts } from '../components/AnimeInfo'
 import { Box } from '../components/Box'
@@ -90,6 +94,19 @@ export default function Watch() {
 
   useTitle(data ? `${data.anime.title} Episode ${number} Subtitle Indonesia` : '')
 
+  const { user } = useAuth()
+  const toasts = useToasts()
+  const mode: PlayerMode = !source ? 'none' : source.kind === 'iframe' ? 'iframe' : 'native'
+  const progress = useProgress({ slug, episode: number, mode })
+  const library = useQuery({
+    queryKey: ['anime-state', slug],
+    queryFn: ({ signal }) => accountApi.animeState(slug, signal),
+    enabled: !!user && !!parsed,
+    staleTime: 30_000,
+  })
+  const saved = library.data?.progress[String(number)]
+  const alreadyWatched = progress.completed || !!saved?.completed
+
   useEffect(() => {
     setSourceId(null)
     if (data) {
@@ -122,7 +139,7 @@ export default function Watch() {
 
         <div className={`relative ${lightsOff ? 'z-50' : ''} ${expanded ? 'fixed inset-0 z-50 bg-black' : ''}`}>
           <div className={`${expanded ? 'h-full' : 'aspect-video'} w-full bg-black`}>
-            <Player source={source} anime={anime} episode={episode} />
+            <Player source={source} anime={anime} episode={episode} startAt={saved && !saved.completed ? saved.position : undefined} onTime={progress.onTime} />
           </div>
           <div className="flex flex-wrap items-center justify-end gap-4 bg-box px-[15px] py-2.5 text-[12.5px]">
             {sources.length > 1 && (
@@ -139,6 +156,19 @@ export default function Watch() {
                   </option>
                 ))}
               </select>
+            )}
+            {user && source && (
+              <button
+                type="button"
+                disabled={alreadyWatched}
+                onClick={async () => {
+                  const ok = await progress.markDone()
+                  if (!ok) toasts.push({ tone: 'xp', title: 'Belum bisa ditandai selesai', text: 'Tonton lebih lama dulu, lalu coba lagi.' })
+                }}
+                className="flex items-center gap-1 hover:text-heading disabled:opacity-60"
+              >
+                <Check className="h-3.5 w-3.5 text-[#2ecc71]" /> {alreadyWatched ? 'Sudah ditonton' : 'Tandai selesai'}
+              </button>
             )}
             <button onClick={() => setExpanded((v) => !v)} className="flex items-center gap-1 hover:text-heading">
               {expanded ? <Minimize2 className="h-3.5 w-3.5 text-[#2ecc71]" /> : <Maximize2 className="h-3.5 w-3.5 text-[#2ecc71]" />}
@@ -220,6 +250,8 @@ export default function Watch() {
             <p className="line-clamp-[6] whitespace-pre-line text-[13.5px] leading-[1.7]">{anime.synopsis}</p>
           </div>
         </div>
+
+        <Comments target={{ anime: anime.slug, episode: episode.number }} title={`Komentar Episode ${episode.number}`} />
 
         {recommendations.length > 0 && (
           <Box title="Recommended Series" as="h3">

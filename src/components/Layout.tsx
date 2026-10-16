@@ -24,6 +24,12 @@ function Footer() {
             </li>
           ))}
         </ul>
+        <nav aria-label="Akun dan komunitas" className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-1">
+          <Link to="/komunitas" className="hover:text-accent">Komunitas</Link>
+          <Link to="/peringkat" className="hover:text-accent">Peringkat</Link>
+          <Link to="/lencana" className="hover:text-accent">Lencana</Link>
+          <Link to="/premium" className="hover:text-accent">Premium</Link>
+        </nav>
         <p className="mx-auto max-w-2xl text-muted">
           Metadata, poster, dan jadwal tayang bersumber dari AniList. Situs ini tidak menyimpan file video di servernya; pemutar
           hanya menampilkan sumber yang didaftarkan admin atau tautan streaming resmi.

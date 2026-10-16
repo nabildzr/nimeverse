@@ -7,6 +7,7 @@ import { seriesPath, statusLabel, thumb } from '../lib/format'
 import { useTheme } from '../lib/theme'
 import { useDebounced } from '../lib/useDebounced'
 import { Logo } from './Logo'
+import { UserMenu } from './UserMenu'
 
 const MENU = [
   { to: '/', label: 'Home', end: true },
@@ -14,6 +15,8 @@ const MENU = [
   { to: '/az-list', label: 'AZ List' },
   { to: '/jadwal', label: 'Jadwal Rilis' },
   { to: '/genres', label: 'Genres' },
+  { to: '/komunitas', label: 'Komunitas' },
+  { to: '/peringkat', label: 'Peringkat' },
 ]
 
 function LiveSearch({ onDone, autoFocus }: { onDone?: () => void; autoFocus?: boolean }) {
@@ -138,6 +141,7 @@ export function Header() {
                 {theme === 'dark' ? <Moon className="h-3 w-3" /> : <Sun className="h-3 w-3" />}
               </span>
             </button>
+            <UserMenu />
           </div>
         </div>
         {searchOpen && (

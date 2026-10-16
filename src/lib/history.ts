@@ -52,3 +52,7 @@ export function toggleBookmark(slug: string): boolean {
   write(BOOKMARK_KEY, has ? list.filter((s) => s !== slug) : [slug, ...list])
   return !has
 }
+
+export function clearBookmarks() {
+  write(BOOKMARK_KEY, [])
+}

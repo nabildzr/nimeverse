@@ -2,9 +2,47 @@ import { useEffect, useRef } from 'react'
 import { ExternalLink, Youtube } from 'lucide-react'
 import type { AnimeDetail, Episode, VideoSource } from '../api/types'
 
+export type TimeHandler = (position: number, duration: number, force?: boolean) => void
+
 /** Plays HLS (via hls.js when not native), MP4, or embeds an iframe source. */
-function NativeVideo({ source, poster }: { source: VideoSource; poster?: string }) {
+function NativeVideo({
+  source,
+  poster,
+  startAt,
+  onTime,
+}: {
+  source: VideoSource
+  poster?: string
+  startAt?: number
+  onTime?: TimeHandler
+}) {
   const ref = useRef<HTMLVideoElement>(null)
+  const report = useRef(onTime)
+  report.current = onTime
+
+  // Resume where the viewer stopped, then report progress while playing, paused and at the end.
+  useEffect(() => {
+    const video = ref.current
+    if (!video) return
+    let seeked = false
+    const meta = () => {
+      if (!seeked && startAt && startAt > 10 && startAt < video.duration - 30) video.currentTime = startAt
+      seeked = true
+    }
+    const tick = () => report.current?.(video.currentTime, video.duration)
+    const flush = () => report.current?.(video.currentTime, video.duration, true)
+    const ended = () => report.current?.(video.duration, video.duration, true)
+    video.addEventListener('loadedmetadata', meta)
+    video.addEventListener('timeupdate', tick)
+    video.addEventListener('pause', flush)
+    video.addEventListener('ended', ended)
+    return () => {
+      video.removeEventListener('loadedmetadata', meta)
+      video.removeEventListener('timeupdate', tick)
+      video.removeEventListener('pause', flush)
+      video.removeEventListener('ended', ended)
+    }
+  }, [startAt, source])
 
   useEffect(() => {
     const video = ref.current
@@ -34,10 +72,14 @@ export function Player({
   source,
   anime,
   episode,
+  startAt,
+  onTime,
 }: {
   source: VideoSource | undefined
   anime: AnimeDetail
   episode: Episode
+  startAt?: number
+  onTime?: TimeHandler
 }) {
   if (source?.kind === 'iframe') {
     return (
@@ -52,7 +94,11 @@ export function Player({
       />
     )
   }
-  if (source) return <NativeVideo key={source.id} source={source} poster={episode.thumbnail ?? anime.bannerImage ?? undefined} />
+  if (source) {
+    return (
+      <NativeVideo key={source.id} source={source} poster={episode.thumbnail ?? anime.bannerImage ?? undefined} startAt={startAt} onTime={onTime} />
+    )
+  }
 
   // No registered source: offer the official stream and the trailer instead.
   const bg = episode.thumbnail ?? anime.bannerImage ?? anime.coverImage
