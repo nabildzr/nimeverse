@@ -9,6 +9,7 @@ import type {
   ScheduleData,
   WatchData,
 } from './types'
+import { decryptPayload } from './crypto'
 
 const BASE = import.meta.env.VITE_API_URL ?? ''
 
@@ -41,7 +42,11 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
     }
     throw new ApiError(res.status, message)
   }
-  return res.json() as Promise<T>
+  const json = await res.json()
+  if (json && typeof json === 'object' && typeof (json as { payload?: unknown }).payload === 'string') {
+    return await decryptPayload<T>((json as { payload: string }).payload)
+  }
+  return json as T
 }
 
 export const api = {
