@@ -16,6 +16,10 @@ export interface User {
   hasGoogle: boolean
   hasAvatar: boolean
   avatarVersion?: number
+  hasBanner: boolean
+  bannerVersion?: number
+  frame?: string
+  effect?: string
   xp: number
   level: number
   levelXp: number
@@ -172,6 +176,10 @@ export interface PublicProfile {
   role?: Role
   hasAvatar: boolean
   avatarVersion?: number
+  hasBanner: boolean
+  bannerVersion?: number
+  frame?: string
+  effect?: string
   streakCurrent: number
   streakBest: number
   joinedAt: string
@@ -185,4 +193,16 @@ export interface CommentTarget {
   anime?: string
   episode?: number
   post?: number
+}
+
+export type AccessorySlot = 'frame' | 'effect'
+
+export interface Accessory {
+  code: string
+  name: string
+  description: string
+  slot: AccessorySlot
+  minLevel: number
+  premium: boolean
+  unlocked: boolean
 }

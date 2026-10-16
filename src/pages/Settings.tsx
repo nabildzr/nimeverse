@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Crown, Trash2, Upload } from 'lucide-react'
-import { accountApi, ApiError } from '../api/client'
+import { Crown, Lock, Trash2, Upload } from 'lucide-react'
+import { accountApi, ApiError, bannerUrl } from '../api/client'
+import type { Accessory, AccessorySlot } from '../api/accountTypes'
 import { useAuth } from '../auth/AuthContext'
-import { Avatar, userFace } from '../components/Avatar'
+import { userFace } from '../components/Avatar'
 import { Box } from '../components/Box'
+import { AccessoryArt, FramedAvatar } from '../components/Decor'
 import { PageLoader } from '../components/States'
 import { useTitle } from '../lib/useTitle'
 
@@ -107,7 +109,9 @@ function AvatarForm() {
 
   return (
     <div className="flex flex-col gap-3 p-[15px] sm:flex-row sm:items-center">
-      <Avatar face={userFace(user)} size={88} />
+      <div className="flex-none p-3">
+        <FramedAvatar face={userFace(user)} frame={user.frame} size={88} />
+      </div>
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
           <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => void upload(e.target.files?.[0])} aria-label="Pilih foto profil" />
@@ -251,6 +255,175 @@ function PasswordForm() {
   )
 }
 
+function BannerForm() {
+  const { user, refresh } = useAuth()
+  const input = useRef<HTMLInputElement>(null)
+  const [state, setState] = useState({ ok: false, text: '' })
+  const [busy, setBusy] = useState(false)
+  if (!user) return null
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return
+    if (file.size > MAX_UPLOAD) return setState({ ok: false, text: 'Ukuran file maksimal 3 MB.' })
+    setBusy(true)
+    try {
+      await accountApi.uploadBanner(file)
+      await refresh()
+      setState({ ok: true, text: 'Banner diperbarui. Semua orang bisa melihatnya di profilmu.' })
+    } catch (err) {
+      setState({ ok: false, text: msg(err) })
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+
+  return (
+    <div className="p-[15px]">
+      <div className="relative aspect-[3/1] w-full overflow-hidden rounded-[4px] bg-gradient-to-br from-nav to-item sm:aspect-[4/1]">
+        {user.hasBanner && <img src={bannerUrl(user.displayName, user.bannerVersion)} alt="Banner profil" className="absolute inset-0 h-full w-full object-cover" />}
+        <AccessoryArt slot="effect" code={user.effect} cover className="absolute inset-0 h-full w-full" />
+        {!user.hasBanner && <span className="absolute inset-0 flex items-center justify-center text-[13px] text-muted">Belum ada banner</span>}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input ref={input} type="file" accept="image/png,image/jpeg,image/gif" className="hidden" onChange={(e) => void upload(e.target.files?.[0])} aria-label="Pilih banner" />
+        <button disabled={busy} onClick={() => input.current?.click()} className="flex h-9 items-center gap-1.5 rounded-[3px] bg-nav px-4 text-[13px] text-white hover:bg-accent disabled:opacity-60">
+          <Upload className="h-4 w-4" aria-hidden="true" /> {busy ? 'Mengunggah...' : 'Unggah banner'}
+        </button>
+        {user.hasBanner && (
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true)
+              try {
+                await accountApi.removeBanner()
+                await refresh()
+                setState({ ok: true, text: 'Banner dihapus.' })
+              } catch (err) {
+                setState({ ok: false, text: msg(err) })
+              } finally {
+                setBusy(false)
+              }
+            }}
+            className="flex h-9 items-center gap-1.5 rounded-[3px] bg-item px-4 text-[13px] hover:text-[#e5484d]"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> Hapus
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-[11.5px] text-muted">
+        PNG atau JPG, 400x100 sampai 2400x1200 piksel, maksimal 3 MB. Rasio 4:1 (mis. 1600x400) paling pas.{' '}
+        {user.premium ? (
+          'GIF animasi tersedia untuk akun Premium kamu.'
+        ) : (
+          <>
+            GIF animasi khusus{' '}
+            <Link to="/premium" className="text-sub hover:underline">
+              Premium
+            </Link>
+            .
+          </>
+        )}
+      </p>
+      <div className="mt-1">
+        <Status {...state} />
+      </div>
+    </div>
+  )
+}
+
+function AccessoryCard({ item, active, onPick, busy }: { item: Accessory; active: boolean; onPick: () => void; busy: boolean }) {
+  const wide = item.slot === 'effect'
+  return (
+    <li>
+      <button
+        type="button"
+        disabled={busy || !item.unlocked}
+        onClick={onPick}
+        aria-pressed={active}
+        className={`flex w-full flex-col items-center gap-2 rounded-[4px] border-2 bg-item p-3 text-center ${active ? 'border-accent' : 'border-transparent'} ${item.unlocked ? 'hover:bg-item-active' : 'cursor-not-allowed opacity-60'}`}
+      >
+        <span className={`relative flex items-center justify-center overflow-hidden bg-box ${wide ? 'h-[70px] w-full rounded-[3px]' : 'h-[88px] w-[88px] rounded-full'}`}>
+          <AccessoryArt slot={item.slot} code={item.code} cover={wide} className="h-full w-full" />
+        </span>
+        <span className="text-[13px] font-semibold text-heading">{item.name}</span>
+        <span className="text-[11.5px] leading-4 text-muted">{item.description}</span>
+        <span className="flex items-center gap-1 text-[11.5px]">
+          {item.unlocked ? (
+            <span className={active ? 'text-accent' : 'text-[#2ecc71]'}>{active ? 'Dipakai' : 'Terbuka'}</span>
+          ) : item.premium ? (
+            <span className="flex items-center gap-1 text-sub">
+              <Crown className="h-3 w-3" aria-hidden="true" /> Premium
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-muted">
+              <Lock className="h-3 w-3" aria-hidden="true" /> Level {item.minLevel}
+            </span>
+          )}
+        </span>
+      </button>
+    </li>
+  )
+}
+
+function AccessoriesForm() {
+  const { user, refresh } = useAuth()
+  const { data } = useQuery({
+    queryKey: ['profile', 'accessories', user?.level, user?.premium],
+    queryFn: ({ signal }) => accountApi.accessories(signal),
+    staleTime: 60_000,
+  })
+  const [state, setState] = useState({ ok: false, text: '' })
+  const [busy, setBusy] = useState(false)
+  if (!user) return null
+
+  const wear = async (slot: AccessorySlot, code: string) => {
+    setBusy(true)
+    try {
+      await accountApi.equip(slot === 'frame' ? { frame: code } : { effect: code })
+      await refresh()
+      setState({ ok: true, text: code ? 'Aksesoris dipakai.' : 'Aksesoris dilepas.' })
+    } catch (err) {
+      setState({ ok: false, text: msg(err) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sections: { slot: AccessorySlot; title: string; hint: string }[] = [
+    { slot: 'frame', title: 'Bingkai foto', hint: 'Animasi di sekeliling foto profilmu.' },
+    { slot: 'effect', title: 'Efek banner', hint: 'Animasi yang bermain di atas banner profilmu.' },
+  ]
+  return (
+    <div className="p-[15px]">
+      <p className="mb-3 text-[12.5px] text-muted">Sebagian terbuka dengan naik level, sebagian khusus Premium. Pilihanmu terlihat oleh semua orang di profilmu.</p>
+      {sections.map(({ slot, title, hint }) => {
+        const items = (data?.items ?? []).filter((i) => i.slot === slot)
+        const current = slot === 'frame' ? user.frame : user.effect
+        return (
+          <section key={slot} className="mb-4">
+            <div className="mb-2 flex flex-wrap items-center gap-x-3">
+              <h3 className="text-[14px] font-semibold text-heading">{title}</h3>
+              <span className="text-[12px] text-muted">{hint}</span>
+              {current && (
+                <button disabled={busy} onClick={() => void wear(slot, '')} className="ml-auto text-[12.5px] text-muted hover:text-heading">
+                  Lepas
+                </button>
+              )}
+            </div>
+            <ul className={`grid gap-2.5 ${slot === 'frame' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+              {items.map((i) => (
+                <AccessoryCard key={i.code} item={i} active={current === i.code} busy={busy} onPick={() => void wear(slot, i.code)} />
+              ))}
+            </ul>
+          </section>
+        )
+      })}
+      <Status {...state} />
+    </div>
+  )
+}
+
 export default function Settings() {
   useTitle('Pengaturan akun')
   const { user, loading } = useAuth()
@@ -268,8 +441,14 @@ export default function Settings() {
       <Box title="Foto profil" as="h2">
         <AvatarForm />
       </Box>
+      <Box title="Banner profil" as="h2">
+        <BannerForm />
+      </Box>
       <Box title="Profil" as="h2">
         <ProfileForm />
+      </Box>
+      <Box title="Aksesoris" as="h2">
+        <AccessoriesForm />
       </Box>
       <Box title="Warna aksen" as="h2">
         <AccentForm />

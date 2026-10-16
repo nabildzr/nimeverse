@@ -10,6 +10,7 @@ import type {
   WatchData,
 } from './types'
 import type {
+  Accessory,
   AnimeState,
   Badge,
   Comment,
@@ -121,6 +122,10 @@ export const accountApi = {
     send<{ user: User }>('PATCH', '/me', patch),
   uploadAvatar: (file: Blob) => request<{ user: User }>('PUT', '/me/avatar', { raw: file }),
   removeAvatar: () => send<void>('DELETE', '/me/avatar'),
+  uploadBanner: (file: Blob) => request<{ user: User }>('PUT', '/me/banner', { raw: file }),
+  removeBanner: () => send<void>('DELETE', '/me/banner'),
+  accessories: (signal?: AbortSignal) => get<{ items: Accessory[] }>('/accessories', signal),
+  equip: (slots: { frame?: string; effect?: string }) => send<{ user: User }>('PUT', '/me/accessories', slots),
   checkIn: () => send<{ outcome: Outcome }>('POST', '/me/checkin'),
 
   watchlist: (status: string, favorite: boolean, page = 1) =>
@@ -173,4 +178,9 @@ export const accountApi = {
 /** URL of a user's picture. The version changes whenever they upload a new one, so browsers refetch it. */
 export function avatarUrl(name: string, version?: number): string {
   return `${BASE}/api/users/${encodeURIComponent(name)}/avatar${version ? `?v=${version}` : ''}`
+}
+
+/** URL of a user's profile banner, versioned like the avatar. */
+export function bannerUrl(name: string, version?: number): string {
+  return `${BASE}/api/users/${encodeURIComponent(name)}/banner${version ? `?v=${version}` : ''}`
 }

@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
-import { Check, Crown, Flame, Image, Palette } from 'lucide-react'
+import { Check, Crown, Flame, Image, Palette, Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { Box } from '../components/Box'
 import { useTitle } from '../lib/useTitle'
 
 const PERKS = [
   { icon: Image, title: 'Foto profil GIF', text: 'Pakai GIF animasi (sampai 2 MB) sebagai foto profil.' },
+  { icon: Image, title: 'Banner GIF', text: 'Banner profil animasi (sampai 3 MB) yang terlihat oleh semua pengunjung profilmu.' },
+  { icon: Sparkles, title: 'Aksesoris eksklusif', text: 'Bingkai Halo Emas dan Pelangi, plus efek banner Aurora, tanpa perlu menunggu level.' },
   { icon: Flame, title: '3 perlindungan streak per bulan', text: 'Akun biasa mendapat 1. Satu hari terlewat tidak memutus streak-mu.' },
   { icon: Palette, title: 'Warna aksen', text: 'Pilih warna untuk nama dan bingkai fotomu di komentar dan profil.' },
   { icon: Crown, title: 'Mahkota Premium', text: 'Tanda mahkota di samping namamu di komentar, komunitas, dan papan peringkat.' },

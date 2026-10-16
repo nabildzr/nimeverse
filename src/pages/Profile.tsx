@@ -1,10 +1,11 @@
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Flame, Heart, Settings as Cog } from 'lucide-react'
-import { accountApi } from '../api/client'
-import { Avatar, RoleMark, userFace, XpBar } from '../components/Avatar'
+import { accountApi, bannerUrl } from '../api/client'
+import { RoleMark, userFace, XpBar } from '../components/Avatar'
 import { BadgeGrid } from '../components/BadgeGrid'
 import { Box } from '../components/Box'
+import { AccessoryArt, FramedAvatar } from '../components/Decor'
 import { Poster } from '../components/Poster'
 import { ErrorView, PageLoader } from '../components/States'
 import { seriesPath } from '../lib/format'
@@ -34,10 +35,16 @@ export default function Profile() {
   const earned = data.badges.filter((b) => b.earned)
   return (
     <div className="mx-auto max-w-[860px]">
-      <article className="box">
-        <div className="flex flex-col gap-4 p-[18px] sm:flex-row sm:items-center">
-          <Avatar face={userFace(data)} size={96} className="mx-auto sm:mx-0" />
-          <div className="min-w-0 flex-1">
+      <article className="box overflow-hidden">
+        <div className="relative aspect-[3/1] w-full bg-gradient-to-br from-nav to-item sm:aspect-[4/1]" style={data.accentColor ? { backgroundImage: `linear-gradient(135deg, ${data.accentColor}55, transparent)` } : undefined}>
+          {data.hasBanner && <img src={bannerUrl(data.name, data.bannerVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+          <AccessoryArt slot="effect" code={data.effect} cover className="absolute inset-0 h-full w-full" />
+        </div>
+        <div className="flex flex-col gap-4 px-[18px] pb-[18px] pt-0 sm:flex-row sm:items-center">
+          <div className="-mt-12 mx-auto flex-none rounded-full bg-box p-1 sm:mx-0" style={{ marginBottom: data.frame ? 14 : 0 }}>
+            <FramedAvatar face={userFace(data)} frame={data.frame} size={96} />
+          </div>
+          <div className="min-w-0 flex-1 sm:pt-4">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-[22px] font-bold text-heading" style={data.accentColor ? { color: data.accentColor } : undefined}>
                 {data.name}
