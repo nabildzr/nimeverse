@@ -1,13 +1,15 @@
 import { useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Crown, Lock, Trash2, Upload } from 'lucide-react'
+import { Crown, Trash2, Upload } from 'lucide-react'
 import { accountApi, ApiError, bannerUrl } from '../api/client'
 import type { Accessory, AccessorySlot } from '../api/accountTypes'
 import { useAuth } from '../auth/AuthContext'
 import { userFace } from '../components/Avatar'
 import { Box } from '../components/Box'
 import { AccessoryArt, FramedAvatar } from '../components/Decor'
+import { ItemPreview, RarityTag, SourceTag } from '../components/ItemPreview'
+import { RARITY_COLOR } from '../lib/rarity'
 import { PageLoader } from '../components/States'
 import { useTitle } from '../lib/useTitle'
 
@@ -333,7 +335,7 @@ function BannerForm() {
 }
 
 function AccessoryCard({ item, active, onPick, busy }: { item: Accessory; active: boolean; onPick: () => void; busy: boolean }) {
-  const wide = item.slot === 'effect'
+  const border = item.rarity ? RARITY_COLOR[item.rarity].border : undefined
   return (
     <li>
       <button
@@ -341,25 +343,15 @@ function AccessoryCard({ item, active, onPick, busy }: { item: Accessory; active
         disabled={busy || !item.unlocked}
         onClick={onPick}
         aria-pressed={active}
+        style={active ? undefined : { borderColor: border ? `${border}66` : undefined }}
         className={`flex w-full flex-col items-center gap-2 rounded-[4px] border-2 bg-item p-3 text-center ${active ? 'border-accent' : 'border-transparent'} ${item.unlocked ? 'hover:bg-item-active' : 'cursor-not-allowed opacity-60'}`}
       >
-        <span className={`relative flex items-center justify-center overflow-hidden bg-box ${wide ? 'h-[70px] w-full rounded-[3px]' : 'h-[88px] w-[88px] rounded-full'}`}>
-          <AccessoryArt slot={item.slot} code={item.code} cover={wide} className="h-full w-full" />
-        </span>
+        <ItemPreview item={item} />
         <span className="text-[13px] font-semibold text-heading">{item.name}</span>
+        <RarityTag rarity={item.rarity} />
         <span className="text-[11.5px] leading-4 text-muted">{item.description}</span>
         <span className="flex items-center gap-1 text-[11.5px]">
-          {item.unlocked ? (
-            <span className={active ? 'text-accent' : 'text-[#2ecc71]'}>{active ? 'Dipakai' : 'Terbuka'}</span>
-          ) : item.premium ? (
-            <span className="flex items-center gap-1 text-sub">
-              <Crown className="h-3 w-3" aria-hidden="true" /> Premium
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-muted">
-              <Lock className="h-3 w-3" aria-hidden="true" /> Level {item.minLevel}
-            </span>
-          )}
+          <SourceTag item={item} active={active} />
         </span>
       </button>
     </li>
@@ -369,9 +361,9 @@ function AccessoryCard({ item, active, onPick, busy }: { item: Accessory; active
 function AccessoriesForm() {
   const { user, refresh } = useAuth()
   const { data } = useQuery({
-    queryKey: ['profile', 'accessories', user?.level, user?.premium],
+    queryKey: ['profile', 'accessories', user?.level, user?.premium, user?.coins],
     queryFn: ({ signal }) => accountApi.accessories(signal),
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
   const [state, setState] = useState({ ok: false, text: '' })
   const [busy, setBusy] = useState(false)
@@ -380,7 +372,7 @@ function AccessoriesForm() {
   const wear = async (slot: AccessorySlot, code: string) => {
     setBusy(true)
     try {
-      await accountApi.equip(slot === 'frame' ? { frame: code } : { effect: code })
+      await accountApi.equip({ [slot]: code })
       await refresh()
       setState({ ok: true, text: code ? 'Aksesoris dipakai.' : 'Aksesoris dilepas.' })
     } catch (err) {
@@ -390,16 +382,25 @@ function AccessoriesForm() {
     }
   }
 
-  const sections: { slot: AccessorySlot; title: string; hint: string }[] = [
-    { slot: 'frame', title: 'Bingkai foto', hint: 'Animasi di sekeliling foto profilmu.' },
-    { slot: 'effect', title: 'Efek banner', hint: 'Animasi yang bermain di atas banner profilmu.' },
+  const sections: { slot: AccessorySlot; title: string; hint: string; cols: string }[] = [
+    { slot: 'frame', title: 'Bingkai foto', hint: 'Animasi di sekeliling foto profilmu.', cols: 'grid-cols-2 sm:grid-cols-3' },
+    { slot: 'effect', title: 'Efek banner', hint: 'Animasi yang bermain di atas banner profilmu.', cols: 'grid-cols-1 sm:grid-cols-2' },
+    { slot: 'skin', title: 'Skin kartu', hint: 'Latar animasi untuk kartu profil yang muncul saat fotomu diklik.', cols: 'grid-cols-1 sm:grid-cols-2' },
+    { slot: 'title', title: 'Gelar', hint: 'Teks di bawah namamu pada kartu profil.', cols: 'grid-cols-2 sm:grid-cols-3' },
   ]
+  const worn: Record<AccessorySlot, string | undefined> = { frame: user.frame, effect: user.effect, skin: user.skin, title: user.title }
   return (
     <div className="p-[15px]">
-      <p className="mb-3 text-[12.5px] text-muted">Sebagian terbuka dengan naik level, sebagian khusus Premium. Pilihanmu terlihat oleh semua orang di profilmu.</p>
-      {sections.map(({ slot, title, hint }) => {
+      <p className="mb-3 text-[12.5px] text-muted">
+        Sebagian terbuka dengan naik level, sebagian khusus Premium, dan sisanya hanya dari{' '}
+        <Link to="/gacha" className="text-accent hover:underline">
+          gacha
+        </Link>
+        . Pilihanmu terlihat oleh semua orang.
+      </p>
+      {sections.map(({ slot, title, hint, cols }) => {
         const items = (data?.items ?? []).filter((i) => i.slot === slot)
-        const current = slot === 'frame' ? user.frame : user.effect
+        const current = worn[slot]
         return (
           <section key={slot} className="mb-4">
             <div className="mb-2 flex flex-wrap items-center gap-x-3">
@@ -411,7 +412,7 @@ function AccessoriesForm() {
                 </button>
               )}
             </div>
-            <ul className={`grid gap-2.5 ${slot === 'frame' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+            <ul className={`grid gap-2.5 ${cols}`}>
               {items.map((i) => (
                 <AccessoryCard key={i.code} item={i} active={current === i.code} busy={busy} onPick={() => void wear(slot, i.code)} />
               ))}

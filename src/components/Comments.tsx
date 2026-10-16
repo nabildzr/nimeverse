@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowBigDown, ArrowBigUp, EyeOff, Flag, MessageSquare, Pencil, Trash2 } from 'lucide-react'
-import { accountApi, ApiError } from '../api/client'
-import type { Comment, CommentTarget } from '../api/accountTypes'
+import { accountApi, ApiError, liveUrl } from '../api/client'
+import type { Comment, CommentTarget, LiveEvent, MediaRef } from '../api/accountTypes'
 import { useAuth } from '../auth/AuthContext'
 import { timeAgo } from '../lib/format'
+import { useLive } from '../lib/useLive'
 import { Avatar, AuthorName, authorFace } from './Avatar'
 import { Box } from './Box'
+import { ImagePicker, MediaImage } from './MediaImage'
+import { AuthorPopover } from './ProfileCard'
 
 const MAX_LEN = 2000
 
@@ -127,32 +130,38 @@ function Editor({
   autoFocus,
   onSubmit,
   onCancel,
+  allowImage = true,
 }: {
   initial?: string
   initialSpoiler?: boolean
   submitLabel: string
   placeholder?: string
   autoFocus?: boolean
-  onSubmit: (body: string, spoiler: boolean) => Promise<void>
+  onSubmit: (body: string, spoiler: boolean, image?: string) => Promise<void>
   onCancel?: () => void
+  /** Editing keeps the original picture, so the picker is only offered for new comments. */
+  allowImage?: boolean
 }) {
   const [body, setBody] = useState(initial)
   const [spoiler, setSpoiler] = useState(initialSpoiler)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [image, setImage] = useState<MediaRef | null>(null)
   const trimmed = body.trim()
+  const canSend = !!trimmed || !!image
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault()
-        if (!trimmed || busy) return
+        if (!canSend || busy) return
         setBusy(true)
         setError('')
         try {
-          await onSubmit(trimmed, spoiler)
+          await onSubmit(trimmed, spoiler, image?.id)
           setBody('')
           setSpoiler(false)
+          setImage(null)
         } catch (err) {
           setError(errorText(err))
         } finally {
@@ -171,6 +180,7 @@ function Editor({
         className="w-full resize-y rounded-[3px] border border-input-border bg-input p-2.5 text-[14px] text-heading outline-none focus:border-accent"
       />
       <div className="mt-1.5 flex flex-wrap items-center gap-3">
+        {allowImage && <ImagePicker value={image} onChange={setImage} disabled={busy} />}
         <label className="flex items-center gap-1.5 text-[12.5px]">
           <input type="checkbox" checked={spoiler} onChange={(e) => setSpoiler(e.target.checked)} /> Spoiler
         </label>
@@ -183,7 +193,7 @@ function Editor({
               Batal
             </button>
           )}
-          <button disabled={!trimmed || busy} className="h-[30px] rounded-[3px] bg-accent px-4 text-[13px] font-medium text-white disabled:opacity-50">
+          <button disabled={!canSend || busy} className="h-[30px] rounded-[3px] bg-accent px-4 text-[13px] font-medium text-white disabled:opacity-50">
             {busy ? 'Mengirim...' : submitLabel}
           </button>
         </div>
@@ -197,8 +207,13 @@ function Editor({
   )
 }
 
+/** Adds a comment, or replaces it when it is already listed (a live event can arrive before our own response). */
+function upsert(items: Comment[], next: Comment): Comment[] {
+  return items.some((c) => c.id === next.id) ? items.map((c) => (c.id === next.id ? next : c)) : [...items, next]
+}
+
 interface Handlers {
-  reply: (parentId: number, body: string, spoiler: boolean) => Promise<void>
+  reply: (parentId: number, body: string, spoiler: boolean, image?: string) => Promise<void>
   edit: (id: number, body: string, spoiler: boolean) => Promise<void>
   remove: (id: number) => Promise<void>
   patchVote: (id: number, score: number, myVote: number) => void
@@ -217,7 +232,13 @@ function CommentNode({ comment, children, handlers }: { comment: Comment; childr
   return (
     <li className="mt-3">
       <div className="flex gap-2.5">
-        {comment.author ? <Avatar face={authorFace(comment.author)} size={comment.depth > 0 ? 28 : 34} /> : <span className="h-8 w-8 flex-none rounded-full bg-control" />}
+        {comment.author ? (
+          <AuthorPopover author={comment.author}>
+            <Avatar face={authorFace(comment.author)} size={comment.depth > 0 ? 28 : 34} />
+          </AuthorPopover>
+        ) : (
+          <span className="h-8 w-8 flex-none rounded-full bg-control" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 text-[12.5px]">
             <AuthorName author={comment.author} />
@@ -230,6 +251,7 @@ function CommentNode({ comment, children, handlers }: { comment: Comment; childr
                 initial={comment.body}
                 initialSpoiler={comment.spoiler}
                 submitLabel="Simpan"
+                allowImage={false}
                 autoFocus
                 onSubmit={async (b, s) => {
                   await handlers.edit(comment.id, b, s)
@@ -245,7 +267,10 @@ function CommentNode({ comment, children, handlers }: { comment: Comment; childr
               <EyeOff className="h-4 w-4" aria-hidden="true" /> Berisi spoiler. Klik untuk menampilkan.
             </button>
           ) : (
-            <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-[1.6] text-text">{comment.body}</p>
+            <>
+              {comment.body && <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-[1.6] text-text">{comment.body}</p>}
+              {comment.image && <MediaImage image={comment.image} />}
+            </>
           )}
           {!comment.deleted && mode !== 'edit' && (
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -278,8 +303,8 @@ function CommentNode({ comment, children, handlers }: { comment: Comment; childr
                 submitLabel="Balas"
                 placeholder={`Balas ${comment.author?.name ?? ''}`.trim()}
                 autoFocus
-                onSubmit={async (b, s) => {
-                  await handlers.reply(comment.id, b, s)
+                onSubmit={async (b, s, img) => {
+                  await handlers.reply(comment.id, b, s, img)
                   setMode('view')
                 }}
                 onCancel={() => setMode('view')}
@@ -313,6 +338,26 @@ export function Comments({ target, title = 'Komentar', locked = false }: { targe
     staleTime: 30_000,
   })
 
+  useLive(
+    liveUrl(target),
+    (ev: LiveEvent) => {
+      if (ev.type === 'comment' && ev.comment) {
+        const incoming = ev.comment
+        // Our own comment is already in the list from the response; everybody else's is added here.
+        patch((items) => (items.some((c) => c.id === incoming.id) ? items : upsert(items, incoming)))
+      } else if (ev.type === 'comment-edit' && ev.comment) {
+        const incoming = ev.comment
+        patch((items) => items.map((c) => (c.id === incoming.id ? { ...incoming, mine: c.mine, myVote: c.myVote } : c)))
+      } else if (ev.type === 'comment-delete' && ev.id) {
+        void client.invalidateQueries({ queryKey: key })
+      } else if (ev.type === 'score' && ev.kind === 'comment' && ev.id && ev.score !== undefined) {
+        const { id, score } = ev
+        patch((items) => items.map((c) => (c.id === id ? { ...c, score } : c)))
+      }
+    },
+    () => void client.invalidateQueries({ queryKey: key }),
+  )
+
   const { roots, children } = useMemo(() => {
     const kids = new Map<number, Comment[]>()
     const top: Comment[] = []
@@ -328,9 +373,9 @@ export function Comments({ target, title = 'Komentar', locked = false }: { targe
 
   const handlers: Handlers = {
     locked,
-    reply: async (parentId, body, spoiler) => {
-      const r = await accountApi.addComment(target, body, spoiler, parentId)
-      patch((items) => [...items, r.comment])
+    reply: async (parentId, body, spoiler, image) => {
+      const r = await accountApi.addComment(target, body, spoiler, parentId, image)
+      patch((items) => upsert(items, r.comment))
       announce(r.outcome)
     },
     edit: async (id, body, spoiler) => {
@@ -354,9 +399,9 @@ export function Comments({ target, title = 'Komentar', locked = false }: { targe
         ) : user ? (
           <Editor
             submitLabel="Kirim"
-            onSubmit={async (body, spoiler) => {
-              const r = await accountApi.addComment(target, body, spoiler)
-              patch((items) => [...items, r.comment])
+            onSubmit={async (body, spoiler, image) => {
+              const r = await accountApi.addComment(target, body, spoiler, undefined, image)
+              patch((items) => upsert(items, r.comment))
               announce(r.outcome)
             }}
           />

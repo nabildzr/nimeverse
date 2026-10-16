@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Award, Bookmark, Crown, Flame, LogIn, LogOut, Settings, Trophy, User as UserIcon } from 'lucide-react'
+import { Award, Bookmark, Coins, Crown, Flame, Gift, LogIn, LogOut, Settings, Target, Trophy, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { Avatar, userFace, XpBar } from './Avatar'
 
@@ -50,8 +50,13 @@ export function UserMenu() {
                 <div className="flex items-center gap-1 truncate text-[14px] font-semibold text-heading">
                   {user.displayName} {user.premium && <Crown className="h-3.5 w-3.5 text-sub" aria-label="Premium" role="img" />}
                 </div>
-                <div className="flex items-center gap-1 text-[12px] text-muted">
-                  <Flame className="h-3.5 w-3.5 text-[#ff6b3d]" aria-hidden="true" /> {user.streakCurrent} hari beruntun
+                <div className="flex items-center gap-2 text-[12px] text-muted">
+                  <span className="flex items-center gap-1">
+                    <Flame className="h-3.5 w-3.5 text-[#ff6b3d]" aria-hidden="true" /> {user.streakCurrent} hari
+                  </span>
+                  <span className="flex items-center gap-1" title="Koin">
+                    <Coins className="h-3.5 w-3.5 text-sub" aria-hidden="true" /> {user.coins.toLocaleString('id-ID')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -62,6 +67,12 @@ export function UserMenu() {
           </Link>
           <Link role="menuitem" to="/watchlist" onClick={() => setOpen(false)} className={item}>
             <Bookmark className="h-4 w-4" aria-hidden="true" /> Watchlist
+          </Link>
+          <Link role="menuitem" to="/misi" onClick={() => setOpen(false)} className={item}>
+            <Target className="h-4 w-4" aria-hidden="true" /> Misi harian
+          </Link>
+          <Link role="menuitem" to="/gacha" onClick={() => setOpen(false)} className={item}>
+            <Gift className="h-4 w-4" aria-hidden="true" /> Gacha
           </Link>
           <Link role="menuitem" to="/lencana" onClick={() => setOpen(false)} className={item}>
             <Award className="h-4 w-4" aria-hidden="true" /> Lencana

@@ -28,6 +28,8 @@ function Footer() {
           <Link to="/komunitas" className="hover:text-accent">Komunitas</Link>
           <Link to="/peringkat" className="hover:text-accent">Peringkat</Link>
           <Link to="/lencana" className="hover:text-accent">Lencana</Link>
+          <Link to="/misi" className="hover:text-accent">Misi</Link>
+          <Link to="/gacha" className="hover:text-accent">Gacha</Link>
           <Link to="/premium" className="hover:text-accent">Premium</Link>
         </nav>
         <p className="mx-auto max-w-2xl text-muted">

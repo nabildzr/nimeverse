@@ -1,4 +1,4 @@
-import { Award, Bookmark, CheckCircle, Clock, Compass, Crown, Flame, Heart, Layers, MessageCircle, MessagesSquare, PenLine, Play, Star, ThumbsUp, Trophy, Tv, Zap, type LucideIcon } from 'lucide-react'
+import { Award, Bookmark, CheckCircle, Gem, Gift, Target, Clock, Compass, Crown, Flame, Heart, Layers, MessageCircle, MessagesSquare, PenLine, Play, Star, ThumbsUp, Trophy, Tv, Zap, type LucideIcon } from 'lucide-react'
 import type { Badge } from '../api/accountTypes'
 
 // Names match the icon field of the backend badge catalogue.
@@ -20,6 +20,9 @@ const ICONS: Record<string, LucideIcon> = {
   heart: Heart,
   bookmark: Bookmark,
   'check-circle': CheckCircle,
+  gift: Gift,
+  gem: Gem,
+  target: Target,
 }
 
 const TIER: Record<Badge['tier'], string> = {

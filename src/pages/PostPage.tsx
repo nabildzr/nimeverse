@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { EyeOff, Lock, Trash2, Unlock } from 'lucide-react'
-import { accountApi } from '../api/client'
-import type { Post } from '../api/accountTypes'
+import { accountApi, liveUrl } from '../api/client'
+import type { LiveEvent, Post } from '../api/accountTypes'
 import { useAuth } from '../auth/AuthContext'
 import { Avatar, AuthorName, authorFace } from '../components/Avatar'
 import { Comments, ReportButton, VoteButtons } from '../components/Comments'
+import { MediaImage } from '../components/MediaImage'
+import { AuthorPopover } from '../components/ProfileCard'
 import { ErrorView, PageLoader } from '../components/States'
 import { timeAgo } from '../lib/format'
+import { useLive } from '../lib/useLive'
 import { useTitle } from '../lib/useTitle'
 
 export default function PostPage() {
@@ -25,6 +28,23 @@ export default function PostPage() {
     staleTime: 30_000,
   })
   useTitle(post && !post.deleted ? post.title : '')
+
+  // Live: score, edits, lock and removal of the post itself (comments are handled by the comment list).
+  useLive(
+    Number.isInteger(id) && id > 0 ? liveUrl({ post: id }) : null,
+    (ev: LiveEvent) => {
+      if (ev.type === 'score' && ev.kind === 'post' && ev.score !== undefined) {
+        const score = ev.score
+        client.setQueryData<Post>(key, (old) => (old ? { ...old, score } : old))
+      } else if (ev.type === 'post-update' && ev.post) {
+        const incoming = ev.post
+        client.setQueryData<Post>(key, (old) => (old ? { ...incoming, mine: old.mine, myVote: old.myVote } : old))
+      } else if (ev.type === 'post-delete') {
+        void client.invalidateQueries({ queryKey: key })
+      }
+    },
+    () => void client.invalidateQueries({ queryKey: key }),
+  )
 
   const remove = useMutation({
     mutationFn: () => accountApi.deletePost(id),
@@ -55,7 +75,11 @@ export default function PostPage() {
               <Link to={`/komunitas/${post.community}`} className="font-semibold text-heading hover:text-accent">
                 {post.communityName}
               </Link>
-              {post.author && <Avatar face={authorFace(post.author)} size={20} />}
+              {post.author && (
+                <AuthorPopover author={post.author}>
+                  <Avatar face={authorFace(post.author)} size={20} />
+                </AuthorPopover>
+              )}
               <AuthorName author={post.author} />
               <span>{timeAgo(post.createdAt)}</span>
               {post.editedAt && <span>(diedit)</span>}
@@ -75,7 +99,10 @@ export default function PostPage() {
                   <EyeOff className="h-4 w-4" aria-hidden="true" /> Berisi spoiler. Klik untuk menampilkan.
                 </button>
               ) : (
-                <p className="mt-3 whitespace-pre-wrap break-words text-[14.5px] leading-[1.7]">{post.body}</p>
+                <>
+                  {post.body && <p className="mt-3 whitespace-pre-wrap break-words text-[14.5px] leading-[1.7]">{post.body}</p>}
+                  {post.image && <MediaImage image={post.image} />}
+                </>
               ))}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
               {(post.mine || isStaff) && !post.deleted && (

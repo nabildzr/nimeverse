@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Flame, Heart, Settings as Cog } from 'lucide-react'
 import { accountApi, bannerUrl } from '../api/client'
+import { titleName } from '../lib/titles'
 import { RoleMark, userFace, XpBar } from '../components/Avatar'
 import { BadgeGrid } from '../components/BadgeGrid'
 import { Box } from '../components/Box'
@@ -35,7 +36,8 @@ export default function Profile() {
   const earned = data.badges.filter((b) => b.earned)
   return (
     <div className="mx-auto max-w-[860px]">
-      <article className="box overflow-hidden">
+      <article className="relative box overflow-hidden">
+        <AccessoryArt slot="skin" code={data.skin} cover className="absolute inset-0 z-0 h-full w-full" />
         <div className="relative aspect-[3/1] w-full bg-gradient-to-br from-nav to-item sm:aspect-[4/1]" style={data.accentColor ? { backgroundImage: `linear-gradient(135deg, ${data.accentColor}55, transparent)` } : undefined}>
           {data.hasBanner && <img src={bannerUrl(data.name, data.bannerVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
           <AccessoryArt slot="effect" code={data.effect} cover className="absolute inset-0 h-full w-full" />
@@ -56,6 +58,7 @@ export default function Profile() {
                 </Link>
               )}
             </div>
+            {titleName(data.title) && <div className="text-[13px] font-medium text-sub">{titleName(data.title)}</div>}
             <div className="mt-0.5 text-[12.5px] text-muted">
               Bergabung {new Date(data.joinedAt).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
             </div>

@@ -20,6 +20,9 @@ export interface User {
   bannerVersion?: number
   frame?: string
   effect?: string
+  skin?: string
+  title?: string
+  coins: number
   xp: number
   level: number
   levelXp: number
@@ -52,6 +55,7 @@ export interface Outcome {
   streak: number
   streakIncreased: boolean
   streakFreezeUsed: boolean
+  coins: number
 }
 
 export interface Badge extends BadgeBrief {
@@ -87,6 +91,7 @@ export interface Comment {
   editedAt?: string
   deleted: boolean
   mine: boolean
+  image?: MediaRef
 }
 
 export interface Post {
@@ -107,6 +112,7 @@ export interface Post {
   editedAt?: string
   deleted: boolean
   mine: boolean
+  image?: MediaRef
 }
 
 export interface Community {
@@ -180,6 +186,8 @@ export interface PublicProfile {
   bannerVersion?: number
   frame?: string
   effect?: string
+  skin?: string
+  title?: string
   streakCurrent: number
   streakBest: number
   joinedAt: string
@@ -195,14 +203,79 @@ export interface CommentTarget {
   post?: number
 }
 
-export type AccessorySlot = 'frame' | 'effect'
+export type AccessorySlot = 'frame' | 'effect' | 'skin' | 'title'
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary'
 
 export interface Accessory {
   code: string
   name: string
   description: string
   slot: AccessorySlot
+  source: 'level' | 'premium' | 'gacha'
   minLevel: number
   premium: boolean
+  rarity?: Rarity
   unlocked: boolean
+}
+
+export interface MediaRef {
+  id: string
+  width: number
+  height: number
+  animated: boolean
+}
+
+export interface PullResult {
+  code: string
+  name: string
+  slot: AccessorySlot
+  rarity: Rarity
+  duplicate: boolean
+  refund: number
+}
+
+export interface PullBatch {
+  results: PullResult[]
+  spent: number
+  refunded: number
+  coins: number
+  pityEpic: number
+  pityLegend: number
+  newBadges: BadgeBrief[]
+}
+
+export interface GachaState {
+  coins: number
+  pityEpic: number
+  pityLegend: number
+  pityEpicAt: number
+  pityLegendAt: number
+  costOne: number
+  costTen: number
+  rates: Record<Rarity, number>
+  refunds: Record<Rarity, number>
+  owned: string[]
+  history: { code: string; name: string; rarity: Rarity; duplicate: boolean; at: string }[]
+  pulls: number
+}
+
+export interface Quest {
+  code: string
+  name: string
+  description: string
+  goal: number
+  reward: number
+  progress: number
+  claimed: boolean
+  claimable: boolean
+}
+
+/** What the server pushes over the live stream. */
+export interface LiveEvent {
+  type: 'comment' | 'comment-edit' | 'comment-delete' | 'score' | 'post' | 'post-update' | 'post-delete'
+  comment?: Comment
+  post?: Post
+  kind?: 'comment' | 'post'
+  id?: number
+  score?: number
 }

@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthValue | null>(null)
 export const ME_KEY = ['auth', 'me'] as const
 
 /** Anything cached for one user must go when they sign out or in as somebody else. */
-const USER_KEYS = ['library', 'anime-state', 'continue', 'comments', 'badges', 'profile', 'leaderboard', 'posts', 'post']
+const USER_KEYS = ['library', 'anime-state', 'continue', 'comments', 'badges', 'profile', 'leaderboard', 'posts', 'post', 'gacha', 'quests']
 
 function checkinDay(): string {
   return new Date().toLocaleDateString('en-CA')

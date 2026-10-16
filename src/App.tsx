@@ -20,6 +20,8 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const Communities = lazy(() => import('./pages/Communities'))
 const Community = lazy(() => import('./pages/Community'))
 const PostPage = lazy(() => import('./pages/PostPage'))
+const Gacha = lazy(() => import('./pages/Gacha'))
+const Quests = lazy(() => import('./pages/Quests'))
 
 export default function App() {
   return (
@@ -41,6 +43,8 @@ export default function App() {
         <Route path="watchlist" element={<Watchlist />} />
         <Route path="lencana" element={<Badges />} />
         <Route path="peringkat" element={<Leaderboard />} />
+        <Route path="gacha" element={<Gacha />} />
+        <Route path="misi" element={<Quests />} />
         <Route path="komunitas" element={<Communities />} />
         <Route path="komunitas/post/:id" element={<PostPage />} />
         <Route path="komunitas/:slug" element={<Community />} />

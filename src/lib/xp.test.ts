@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Outcome } from '../api/accountTypes'
 import { describeOutcome, levelProgress, xpToNext } from './xp'
 
-const base: Outcome = { gains: [], xp: 0, level: 1, levelUp: false, newBadges: [], streak: 0, streakIncreased: false, streakFreezeUsed: false }
+const base: Outcome = { gains: [], xp: 0, level: 1, levelUp: false, newBadges: [], streak: 0, streakIncreased: false, streakFreezeUsed: false, coins: 0 }
 
 describe('describeOutcome', () => {
   it('says nothing when nothing was earned', () => {
@@ -37,6 +37,11 @@ describe('describeOutcome', () => {
     expect(specs.map((s) => s.tone)).toEqual(['streak', 'level', 'badge'])
     expect(specs[0].title).toBe('Streak 4 hari')
     expect(specs[1].title).toBe('Naik ke level 3!')
+  })
+
+  it('adds the coins earned to the XP toast', () => {
+    const specs = describeOutcome({ ...base, gains: [{ kind: 'watch', xp: 20 }], coins: 20 })
+    expect(specs[0].text).toContain('+20 Koin')
   })
 
   it('does not announce a streak of one day', () => {

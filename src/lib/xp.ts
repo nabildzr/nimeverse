@@ -28,6 +28,7 @@ export function describeOutcome(outcome: Outcome | undefined | null): ToastSpec[
     const parts = gains.filter((g) => g.kind !== 'badge').map((g) => `${GAIN_LABELS[g.kind] ?? g.kind} +${g.xp}`)
     specs.push({ tone: 'xp', title: `+${total} XP`, text: parts.join(' · ') || undefined })
   }
+  if (outcome.coins > 0 && total > 0) specs[0].text = [specs[0].text, `+${outcome.coins} Koin`].filter(Boolean).join(' · ')
   if (outcome.streakIncreased && outcome.streak > 1) {
     specs.push({
       tone: 'streak',

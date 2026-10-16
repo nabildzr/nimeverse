@@ -17,6 +17,16 @@ const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   'effect:twinkle': () => import('../assets/lottie/effect-twinkle.json'),
   'effect:embers': () => import('../assets/lottie/effect-embers.json'),
   'effect:aurora': () => import('../assets/lottie/effect-aurora.json'),
+  'frame:pulse': () => import('../assets/lottie/frame-pulse.json'),
+  'frame:lightning': () => import('../assets/lottie/frame-lightning.json'),
+  'frame:galaxy': () => import('../assets/lottie/frame-galaxy.json'),
+  'effect:snow': () => import('../assets/lottie/effect-snow.json'),
+  'effect:fireflies': () => import('../assets/lottie/effect-fireflies.json'),
+  'effect:meteor': () => import('../assets/lottie/effect-meteor.json'),
+  'skin:holo': () => import('../assets/lottie/skin-holo.json'),
+  'skin:waves': () => import('../assets/lottie/skin-waves.json'),
+  'skin:cyber': () => import('../assets/lottie/skin-cyber.json'),
+  'skin:nebula': () => import('../assets/lottie/skin-nebula.json'),
 }
 
 const prefersReducedMotion = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches

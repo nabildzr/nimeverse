@@ -11,6 +11,10 @@ import type {
 } from './types'
 import type {
   Accessory,
+  GachaState,
+  MediaRef,
+  PullBatch,
+  Quest,
   AnimeState,
   Badge,
   Comment,
@@ -125,7 +129,12 @@ export const accountApi = {
   uploadBanner: (file: Blob) => request<{ user: User }>('PUT', '/me/banner', { raw: file }),
   removeBanner: () => send<void>('DELETE', '/me/banner'),
   accessories: (signal?: AbortSignal) => get<{ items: Accessory[] }>('/accessories', signal),
-  equip: (slots: { frame?: string; effect?: string }) => send<{ user: User }>('PUT', '/me/accessories', slots),
+  equip: (slots: { frame?: string; effect?: string; skin?: string; title?: string }) => send<{ user: User }>('PUT', '/me/accessories', slots),
+  uploadImage: (file: Blob) => request<{ media: MediaRef }>('POST', '/pics', { raw: file }),
+  gacha: () => get<GachaState>('/gacha'),
+  pull: (count: 1 | 10) => send<PullBatch>('POST', '/gacha/pull', { count }),
+  quests: () => get<{ items: Quest[]; resetsAt: string }>('/quests'),
+  claimQuest: (code: string) => send<{ outcome: Outcome; reward: number }>('POST', '/quests/claim', { code }),
   checkIn: () => send<{ outcome: Outcome }>('POST', '/me/checkin'),
 
   watchlist: (status: string, favorite: boolean, page = 1) =>
@@ -147,8 +156,8 @@ export const accountApi = {
 
   comments: (target: CommentTarget, signal?: AbortSignal) =>
     get<{ items: Comment[] }>(`/comments${toQuery({ anime: target.anime, episode: target.episode, post: target.post })}`, signal),
-  addComment: (target: CommentTarget, body: string, spoiler: boolean, parentId?: number) =>
-    send<{ comment: Comment; outcome: Outcome }>('POST', '/comments', { ...target, body, spoiler, parentId }),
+  addComment: (target: CommentTarget, body: string, spoiler: boolean, parentId?: number, image?: string) =>
+    send<{ comment: Comment; outcome: Outcome }>('POST', '/comments', { ...target, body, spoiler, parentId, image }),
   editComment: (id: number, body: string, spoiler?: boolean) =>
     send<{ comment: Comment }>('PATCH', `/comments/${id}`, { body, spoiler }),
   deleteComment: (id: number) => send<void>('DELETE', `/comments/${id}`),
@@ -160,7 +169,7 @@ export const accountApi = {
   community: (slug: string, signal?: AbortSignal) => get<Community>(`/communities/${encodeURIComponent(slug)}`, signal),
   posts: (slug: string, sort: string, page: number, signal?: AbortSignal) =>
     get<{ items: Post[]; more: boolean }>(`/communities/${encodeURIComponent(slug)}/posts${toQuery({ sort, page })}`, signal),
-  createPost: (slug: string, post: { title: string; body: string; spoiler: boolean; anime?: string }) =>
+  createPost: (slug: string, post: { title: string; body: string; spoiler: boolean; anime?: string; image?: string }) =>
     send<{ post: Post; outcome: Outcome }>('POST', `/communities/${encodeURIComponent(slug)}/posts`, post),
   post: (id: number, signal?: AbortSignal) => get<Post>(`/posts/${id}`, signal),
   editPost: (id: number, post: { title: string; body: string; spoiler?: boolean }) =>
@@ -183,4 +192,14 @@ export function avatarUrl(name: string, version?: number): string {
 /** URL of a user's profile banner, versioned like the avatar. */
 export function bannerUrl(name: string, version?: number): string {
   return `${BASE}/api/users/${encodeURIComponent(name)}/banner${version ? `?v=${version}` : ''}`
+}
+
+/** URL of a picture attached to a comment or post. Pictures never change, so browsers cache them for good. */
+export function mediaUrl(id: string): string {
+  return `${BASE}/api/pics/${encodeURIComponent(id)}`
+}
+
+/** Address of the live event stream for a page: an anime or episode, a post, or a community board. */
+export function liveUrl(target: { anime?: string; episode?: number; post?: number; board?: string }): string {
+  return `${BASE}/api/live${toQuery({ anime: target.anime, episode: target.episode, post: target.post, board: target.board })}`
 }

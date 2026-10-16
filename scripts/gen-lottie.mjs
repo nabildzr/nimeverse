@@ -257,9 +257,196 @@ function effectAurora() {
   ])
 }
 
+/* ------------------------------------------------------------------------------------------------------------ */
+/* Gacha frames                                                                                                  */
+/* ------------------------------------------------------------------------------------------------------------ */
+function framePulse() {
+  const len = 80
+  ind = 0
+  return comp('pulse', 200, 200, len, [
+    layer([ring(72, rgb(190, 215, 255), 3)], {
+      nm: 'pulse', p: still(C),
+      s: anim([[0, [96, 96, 100]], [40, [106, 106, 100]], [80, [96, 96, 100]]]),
+      o: anim([[0, 90], [40, 35], [80, 90]]),
+    }, len),
+  ])
+}
+
+function frameLightning() {
+  const len = 60
+  ind = 0
+  // Flickering opacity gives the electric feel; two dashed rings run in opposite directions.
+  const flicker = (base) => anim([[0, base], [6, base - 45], [9, base], [18, base - 20], [24, base], [33, base - 55], [36, base], [48, base - 25], [60, base]], LIN)
+  return comp('lightning', 200, 200, len, [
+    layer([ring(80, rgb(255, 245, 140), 3, { dash: { on: 4, off: 14, offset: anim([[0, 0], [len, 72]], LIN) } })], { nm: 'sparks', p: still(C), o: flicker(100) }, len),
+    layer([ring(72, rgb(120, 215, 255), 5, { dash: { on: 22, off: 8, offset: anim([[0, 0], [len, -90]], LIN) } })], { nm: 'arc', p: still(C), o: flicker(95) }, len),
+    layer([ring(70, rgb(255, 255, 255), 1.5, { o: still(55) })], { nm: 'core', p: still(C) }, len),
+  ])
+}
+
+function frameGalaxy() {
+  const len = 240
+  ind = 0
+  const planet = (radius, size, color, turns, startDeg, nm) =>
+    layer([group([ellipse(size), fill(color)], { p: still([radius, 0]) })], {
+      nm, p: still(C), r: anim([[0, startDeg], [len, startDeg + 360 * turns]], LIN),
+    }, len)
+  const twinkle = (pos, phase) =>
+    layer([group([star(4, 8, 2.2), fill(rgb(255, 255, 255))], { p: still(pos) })], {
+      nm: 'star', p: still(C),
+      s: anim([[0, [0, 0, 100]], [phase, [0, 0, 100]], [phase + 20, [100, 100, 100]], [phase + 40, [0, 0, 100]], [len, [0, 0, 100]]]),
+    }, len)
+  return comp('galaxy', 200, 200, len, [
+    layer([ring(70, rgb(150, 110, 255), 4, { o: still(70) }), ring(82, rgb(255, 120, 210), 1.5, { o: still(45) })], { nm: 'rings', p: still(C), o: anim([[0, 70], [120, 100], [240, 70]]) }, len),
+    planet(80, 13, rgb(120, 200, 255), 1, 20, 'planet-a'),
+    planet(72, 8, rgb(255, 170, 90), -2, 200, 'planet-b'),
+    twinkle([-58, -62], 10),
+    twinkle([66, -40], 80),
+    twinkle([-20, 76], 150),
+  ])
+}
+
+/* ------------------------------------------------------------------------------------------------------------ */
+/* Gacha banner effects                                                                                          */
+/* ------------------------------------------------------------------------------------------------------------ */
+function effectSnow() {
+  const len = 300
+  ind = 0
+  const layers = Array.from({ length: 18 }, (_, i) => {
+    const x = 20 + i * 44 + ((i * 13) % 20)
+    const y0 = ((i * 97) % 230) - 15
+    const size = 4 + (i % 4) * 1.5
+    return layer([group([ellipse(size), fill(rgb(240, 248, 255), 90)], {})], {
+      nm: 'flake', p: anim(wrapPath(x, y0, i % 2 ? 40 : -40, -10, 212, len), LIN),
+    }, len)
+  })
+  return comp('snow', 800, 200, len, layers)
+}
+
+function effectFireflies() {
+  const len = 240
+  ind = 0
+  const layers = Array.from({ length: 12 }, (_, i) => {
+    const x = 50 + i * 62 + ((i * 31) % 25)
+    const y = 40 + ((i * 53) % 130)
+    const dx = 22 + (i % 3) * 8
+    const dy = 14 + (i % 4) * 5
+    return layer([group([ellipse(7), fill(rgb(200, 255, 120), 95)], {})], {
+      nm: 'firefly',
+      p: anim([[0, [x, y, 0]], [60, [x + dx, y - dy, 0]], [120, [x, y - dy * 2, 0]], [180, [x - dx, y - dy, 0]], [240, [x, y, 0]]]),
+      o: anim([[0, 15], [(i * 20) % 120 + 30, 100], [((i * 20) % 120) + 90, 15], [240, 15]].sort((a, b) => a[0] - b[0])),
+    }, len)
+  })
+  return comp('fireflies', 800, 200, len, layers)
+}
+
+function effectMeteor() {
+  const len = 120
+  ind = 0
+  const layers = Array.from({ length: 5 }, (_, i) => {
+    const phase = i * 24
+    const startX = 120 + i * 150
+    const frames = [[0, [startX + 400, -60, 0], true]]
+    // Each meteor crosses once per loop, waiting offscreen until its turn.
+    const path = [[0, [startX + 400, -60, 0]]]
+    path.splice(0, 1)
+    const t0 = phase
+    const t1 = Math.min(len, phase + 40)
+    const kf = [[0, [startX + 400, -60, 0], true], [t0, [startX + 400, -60, 0]], [t1, [startX - 120, 230, 0]], [Math.min(len, t1 + 1), [startX + 400, -60, 0], true]]
+    const dedup = kf.filter((f, idx) => idx === 0 || f[0] > kf[idx - 1][0])
+    if (dedup[dedup.length - 1][0] < len) dedup.push([len, [startX + 400, -60, 0]])
+    void frames
+    return layer([group([ellipse(70, 3), fill(rgb(255, 245, 210), 95)], { r: still(0) }), group([ellipse(8), fill(rgb(255, 255, 255))], { p: still([-34, 0]) })], {
+      nm: 'meteor', p: anim(dedup, LIN), r: still(-65),
+    }, len)
+  })
+  return comp('meteor', 800, 200, len, layers)
+}
+
+/* ------------------------------------------------------------------------------------------------------------ */
+/* Card skins: 600x240 backgrounds behind the profile card. Kept soft so text on top stays readable.             */
+/* ------------------------------------------------------------------------------------------------------------ */
+const rect = (w, h, p = [0, 0]) => ({ ty: 'rc', nm: 'rect', d: 1, p: still(p), s: still([w, h]), r: still(0) })
+
+function skinHolo() {
+  const len = 150
+  ind = 0
+  const band = (color, delay, w) =>
+    layer([group([rect(w, 420), fill(color, 100)], { sk: undefined, r: still(0) })], {
+      nm: 'band', p: anim([[0, [-160 + delay, 120, 0]], [len, [760 + delay, 120, 0]]], LIN), r: still(20),
+      o: anim([[0, 0], [30, 22], [len - 30, 22], [len, 0]], LIN),
+    }, len)
+  return comp('holo', 600, 240, len, [
+    band(rgb(120, 255, 240), 0, 70),
+    band(rgb(255, 130, 220), 30, 50),
+    band(rgb(255, 235, 130), 55, 40),
+  ])
+}
+
+function skinWaves() {
+  const len = 180
+  ind = 0
+  const wave = (color, y, w, h, op, dir, delay) =>
+    layer([group([ellipse(w, h), fill(color, 100)], {})], {
+      nm: 'wave',
+      p: anim([[0, [300 - 80 * dir, y, 0]], [90 + delay, [300 + 80 * dir, y + 8, 0]], [180, [300 - 80 * dir, y, 0]]].filter((f, i, a) => i === 0 || f[0] > a[i - 1][0])),
+      o: anim([[0, op], [90, op + 8], [180, op]]),
+    }, len)
+  return comp('waves', 600, 240, len, [
+    wave(rgb(60, 140, 255), 215, 900, 90, 20, 1, 0),
+    wave(rgb(80, 200, 255), 235, 800, 80, 18, -1, 0),
+    wave(rgb(120, 120, 255), 195, 700, 70, 14, 1, 0),
+  ])
+}
+
+function skinCyber() {
+  const len = 120
+  ind = 0
+  const lines = Array.from({ length: 8 }, (_, i) => {
+    const y0 = (i * 30) % 240
+    const frames = wrapPath(300, y0, 0, -4, 244, len)
+    return layer([group([rect(640, 1.5), fill(i % 3 === 0 ? rgb(255, 80, 200) : rgb(60, 230, 255), 100)], {})], {
+      nm: 'line', p: anim(frames, LIN), o: still(i % 3 === 0 ? 26 : 18),
+    }, len)
+  })
+  const scan = layer([group([rect(640, 6), fill(rgb(120, 255, 255), 100)], {})], {
+    nm: 'scan', p: anim([[0, [300, -10, 0]], [len, [300, 250, 0]]], LIN), o: still(24),
+  }, len)
+  const cols = Array.from({ length: 6 }, (_, i) =>
+    layer([group([rect(1, 260), fill(rgb(60, 230, 255), 100)], {})], { nm: 'col', p: still([60 + i * 100, 120, 0]), o: still(10) }, len),
+  )
+  return comp('cyber', 600, 240, len, [...cols, ...lines, scan])
+}
+
+function skinNebula() {
+  const len = 240
+  ind = 0
+  const cloud = (color, x, y, size, op, dx, dy) =>
+    layer([group([ellipse(size), fill(color, 100)], {})], {
+      nm: 'cloud',
+      p: anim([[0, [x, y, 0]], [120, [x + dx, y + dy, 0]], [240, [x, y, 0]]]),
+      s: anim([[0, [100, 100, 100]], [120, [118, 118, 100]], [240, [100, 100, 100]]]),
+      o: anim([[0, op], [120, op + 10], [240, op]]),
+    }, len)
+  const spark = (x, y, phase) =>
+    layer([group([star(4, 6, 1.8), fill(rgb(255, 255, 255))], {})], {
+      nm: 'spark', p: still([x, y, 0]),
+      s: anim([[0, [0, 0, 100]], [phase, [0, 0, 100]], [phase + 25, [100, 100, 100]], [phase + 50, [0, 0, 100]], [len, [0, 0, 100]]]),
+    }, len)
+  return comp('nebula', 600, 240, len, [
+    cloud(rgb(120, 60, 255), 130, 80, 260, 28, 40, 20),
+    cloud(rgb(255, 80, 200), 440, 160, 240, 22, -40, -20),
+    cloud(rgb(60, 160, 255), 300, 40, 200, 18, 30, 30),
+    spark(70, 40, 10), spark(200, 190, 60), spark(330, 90, 110), spark(480, 50, 30), spark(540, 200, 150), spark(400, 130, 190),
+  ])
+}
+
 const FILES = {
   'frame-neon': frameNeon, 'frame-stars': frameStars, 'frame-sakura': frameSakura, 'frame-flame': frameFlame,
   'frame-halo': frameHalo, 'frame-rainbow': frameRainbow,
+  'frame-pulse': framePulse, 'frame-lightning': frameLightning, 'frame-galaxy': frameGalaxy,
+  'effect-snow': effectSnow, 'effect-fireflies': effectFireflies, 'effect-meteor': effectMeteor,
+  'skin-holo': skinHolo, 'skin-waves': skinWaves, 'skin-cyber': skinCyber, 'skin-nebula': skinNebula,
   'effect-petals': effectPetals, 'effect-twinkle': effectTwinkle, 'effect-embers': effectEmbers, 'effect-aurora': effectAurora,
 }
 for (const [name, build] of Object.entries(FILES)) save(name, build())
