@@ -87,9 +87,47 @@ export default function Watch() {
   const [sourceId, setSourceId] = useState<number | null>(null)
   const [expanded, setExpanded] = useState(false)
   const [lightsOff, setLightsOff] = useState(false)
+
+  const sources = useMemo(() => {
+    const list = data?.sources ? [...data.sources] : []
+    if (list.length === 0 && data) {
+      if (data.episode.officialUrl && (data.episode.officialUrl.includes('youtube.com') || data.episode.officialUrl.includes('youtu.be'))) {
+        let embed = data.episode.officialUrl
+        try {
+          const u = new URL(embed)
+          const listId = u.searchParams.get('list')
+          const v = u.searchParams.get('v')
+          if (listId) {
+            embed = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}`
+          } else if (v) {
+            embed = `https://www.youtube-nocookie.com/embed/${v}`
+          }
+        } catch {}
+        list.push({
+          id: -1,
+          label: 'YouTube Resmi',
+          kind: 'iframe',
+          url: embed,
+          quality: '1080p',
+          priority: 10,
+        })
+      } else if (data.anime.trailerSite === 'youtube' && data.anime.trailerId) {
+        list.push({
+          id: -2,
+          label: 'Trailer / Preview',
+          kind: 'iframe',
+          url: `https://www.youtube-nocookie.com/embed/${data.anime.trailerId}?autoplay=0`,
+          quality: '1080p',
+          priority: 5,
+        })
+      }
+    }
+    return list
+  }, [data])
+
   const source = useMemo(
-    () => data?.sources.find((s) => s.id === sourceId) ?? data?.sources[0],
-    [data, sourceId],
+    () => sources.find((s) => s.id === sourceId) ?? sources[0],
+    [sources, sourceId],
   )
 
   useTitle(data ? `${data.anime.title} Episode ${number} Subtitle Indonesia` : '')
@@ -130,7 +168,7 @@ export default function Watch() {
   if (isLoading) return <PageLoader />
   if (error || !data) return <ErrorView error={error} retry={refetch} />
 
-  const { anime, episode, prev, next, sources, recommendations, downloads } = data
+  const { anime, episode, prev, next, recommendations, downloads } = data
   const navBtn = 'flex h-[39px] items-center justify-center gap-1 rounded-[3px] bg-box text-[13px]'
 
   return (
