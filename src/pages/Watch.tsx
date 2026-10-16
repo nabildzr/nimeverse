@@ -101,6 +101,9 @@ export default function Watch() {
             embed = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}`
           } else if (v) {
             embed = `https://www.youtube-nocookie.com/embed/${v}`
+          } else if (u.hostname.includes('youtu.be')) {
+            const vid = u.pathname.replace(/^\//, '')
+            if (vid) embed = `https://www.youtube-nocookie.com/embed/${vid}`
           }
         } catch {}
         list.push({

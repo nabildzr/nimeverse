@@ -84,6 +84,7 @@ export function Player({
   const [playTrailer, setPlayTrailer] = useState(false)
 
   if (source?.kind === 'iframe') {
+    const isYouTube = /youtube(-nocookie)?\.com|youtu\.be/.test(source.url)
     return (
       <iframe
         key={source.id}
@@ -91,7 +92,7 @@ export function Player({
         title={`${anime.title} Episode ${episode.number}`}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
-        referrerPolicy="no-referrer"
+        referrerPolicy={isYouTube ? 'strict-origin-when-cross-origin' : 'no-referrer'}
         className="h-full w-full"
       />
     )
@@ -109,6 +110,7 @@ export function Player({
         title={`${anime.title} Trailer`}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
         className="h-full w-full"
       />
     )
