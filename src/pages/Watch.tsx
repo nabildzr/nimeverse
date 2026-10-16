@@ -94,6 +94,18 @@ export default function Watch() {
 
   useTitle(data ? `${data.anime.title} Episode ${number} Subtitle Indonesia` : '')
 
+  const groupedDownloads = useMemo(() => {
+    const list = data?.downloads
+    if (!list || list.length === 0) return {}
+    const map: Record<string, typeof list> = {}
+    for (const dl of list) {
+      const key = `${dl.format.toUpperCase()} ${dl.quality}`
+      if (!map[key]) map[key] = []
+      map[key].push(dl)
+    }
+    return map
+  }, [data?.downloads])
+
   const { user } = useAuth()
   const toasts = useToasts()
   const mode: PlayerMode = !source ? 'none' : source.kind === 'iframe' ? 'iframe' : 'native'
@@ -120,17 +132,6 @@ export default function Watch() {
 
   const { anime, episode, prev, next, sources, recommendations, downloads } = data
   const navBtn = 'flex h-[39px] items-center justify-center gap-1 rounded-[3px] bg-box text-[13px]'
-
-  const groupedDownloads = useMemo(() => {
-    if (!downloads || downloads.length === 0) return {}
-    const map: Record<string, typeof downloads> = {}
-    for (const dl of downloads) {
-      const key = `${dl.format.toUpperCase()} ${dl.quality}`
-      if (!map[key]) map[key] = []
-      map[key].push(dl)
-    }
-    return map
-  }, [downloads])
 
   return (
     <div className="flex flex-col gap-0 desk:flex-row desk:gap-[25px]">
