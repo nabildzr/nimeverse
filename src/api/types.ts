@@ -103,6 +103,18 @@ export interface DetailData {
   recommendations: AnimeCard[]
 }
 
+export interface EpisodeDownload {
+  id: number
+  episodeId: number
+  provider: string
+  format: string
+  quality: string
+  host: string
+  url: string
+  size?: string
+  priority: number
+}
+
 export interface WatchData {
   anime: AnimeDetail
   episode: Episode
@@ -110,6 +122,7 @@ export interface WatchData {
   prev: number | null
   next: number | null
   sources: VideoSource[]
+  downloads?: EpisodeDownload[]
   recommendations: AnimeCard[]
 }
 

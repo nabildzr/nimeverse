@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Check, ChevronLeft, ChevronRight, LayoutGrid, Lightbulb, Maximize2, Minimize2, Monitor, PlayCircle } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, LayoutGrid, Lightbulb, Maximize2, Minimize2, Monitor, PlayCircle } from 'lucide-react'
 import { accountApi, api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { Comments } from '../components/Comments'
@@ -118,8 +118,19 @@ export default function Watch() {
   if (isLoading) return <PageLoader />
   if (error || !data) return <ErrorView error={error} retry={refetch} />
 
-  const { anime, episode, prev, next, sources, recommendations } = data
+  const { anime, episode, prev, next, sources, recommendations, downloads } = data
   const navBtn = 'flex h-[39px] items-center justify-center gap-1 rounded-[3px] bg-box text-[13px]'
+
+  const groupedDownloads = useMemo(() => {
+    if (!downloads || downloads.length === 0) return {}
+    const map: Record<string, typeof downloads> = {}
+    for (const dl of downloads) {
+      const key = `${dl.format.toUpperCase()} ${dl.quality}`
+      if (!map[key]) map[key] = []
+      map[key].push(dl)
+    }
+    return map
+  }, [downloads])
 
   return (
     <div className="flex flex-col gap-0 desk:flex-row desk:gap-[25px]">
@@ -208,6 +219,55 @@ export default function Watch() {
                   </button>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {downloads && downloads.length > 0 && (
+          <div className="my-[15px] rounded-[8px] border border-[#263e60] bg-[#071426] p-[14px]">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                <span className="flex items-center justify-center text-accent">
+                  <Download className="h-4 w-4" />
+                </span>
+                <strong>Download Episode {episode.number}</strong>
+              </div>
+              <span className="hidden sm:inline text-[11.5px] text-muted">
+                Pilih resolusi & server unduhan
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {Object.entries(groupedDownloads).map(([groupKey, items]) => (
+                <div
+                  key={groupKey}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-[6px] border border-[#1b2e47] bg-[#0b1b30] px-3.5 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-accent/20 border border-accent/40 px-2 py-0.5 text-[12px] font-bold text-accent uppercase tracking-wider">
+                      {items[0].format} {items[0].quality}
+                    </span>
+                    {items[0].size && (
+                      <span className="text-[11.5px] text-muted">({items[0].size})</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {items.map((dl) => (
+                      <a
+                        key={dl.id || dl.url}
+                        href={dl.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-[4px] border border-[#2b405f] bg-[#17263e] px-2.5 py-1 text-[12px] font-medium text-white hover:border-accent hover:bg-accent/80 transition-all"
+                      >
+                        <ExternalLink className="h-3 w-3 opacity-60" />
+                        {dl.host}
+                        <span className="text-[10px] text-muted opacity-80">({dl.provider})</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
