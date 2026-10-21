@@ -35,7 +35,7 @@ export function GenreTags({ anime }: { anime: AnimeDetail }) {
         <Link
           key={g.slug}
           to={`/genres/${g.slug}`}
-          className="mb-[5px] mr-[5px] rounded-[3px] border border-nav px-2 py-1 text-[13px] hover:border-accent hover:bg-accent hover:text-white"
+          className={`mb-[5px] mr-[5px] rounded-[3px] border px-2 py-1 text-[13px] hover:border-accent hover:bg-accent hover:text-white ${g.kind === 'tag' ? 'border-line text-muted' : 'border-nav'}`}
         >
           {g.name}
         </Link>

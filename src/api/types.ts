@@ -2,6 +2,8 @@ export interface Genre {
   name: string
   slug: string
   count?: number
+  /** A real genre, or a theme tag such as Isekai or School. Older servers omit it, which means genre. */
+  kind?: 'genre' | 'tag'
 }
 
 export interface AnimeCard {

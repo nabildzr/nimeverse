@@ -28,11 +28,24 @@ export function QuickFilter() {
       <div className="grid grid-cols-2 gap-x-2.5 gap-y-3 p-[5px]">
         <select aria-label="Genre" className={selectCls} value={f.genre} onChange={set('genre')}>
           <option value="">Genre All</option>
-          {data?.items.map((g) => (
-            <option key={g.slug} value={g.slug}>
-              {g.name}
-            </option>
-          ))}
+          <optgroup label="Genre">
+            {data?.items
+              .filter((g) => g.kind !== 'tag')
+              .map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {g.name}
+                </option>
+              ))}
+          </optgroup>
+          <optgroup label="Tema dan tag">
+            {data?.items
+              .filter((g) => g.kind === 'tag')
+              .map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {g.name}
+                </option>
+              ))}
+          </optgroup>
         </select>
         <select aria-label="Status" className={selectCls} value={f.status} onChange={set('status')}>
           <option value="">Status All</option>
