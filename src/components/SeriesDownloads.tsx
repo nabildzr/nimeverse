@@ -7,6 +7,18 @@ function qualityRank(q: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
+function extractPart(host: string): string {
+  const m = host.match(/(?:batch\s+)?(part\s*\d+)/i)
+  return m ? m[1].toUpperCase() : ''
+}
+
+function cleanHost(host: string): string {
+  return host
+    .replace(/\s*\((?:batch\s*)?(?:part\s*\d+)?\)/gi, '')
+    .replace(/\s*\(Batch\)/gi, '')
+    .trim()
+}
+
 export function SeriesDownloads({ downloads }: { downloads: AnimeDownload[] }) {
   // Separate batch downloads from individual episode downloads
   const { batchList, episodeList } = useMemo(() => {
@@ -28,16 +40,30 @@ export function SeriesDownloads({ downloads }: { downloads: AnimeDownload[] }) {
     return { batchList: batches, episodeList: episodes }
   }, [downloads])
 
-  // Group batch downloads by quality
-  const batchGroups = useMemo(() => {
-    const map = new Map<string, AnimeDownload[]>()
+  // Group batch downloads by Part (if any) and then by Quality
+  const batchSections = useMemo(() => {
+    const hasAnyPart = batchList.some((dl) => extractPart(dl.host) !== '')
+    const partMap = new Map<string, Map<string, AnimeDownload[]>>()
+
     for (const dl of batchList) {
-      const key = dl.quality || 'HD'
-      map.set(key, [...(map.get(key) ?? []), dl])
+      const part = hasAnyPart ? (extractPart(dl.host) || 'BATCH') : 'BATCH'
+      if (!partMap.has(part)) {
+        partMap.set(part, new Map())
+      }
+      const qMap = partMap.get(part)!
+      const q = dl.quality || 'HD'
+      qMap.set(q, [...(qMap.get(q) ?? []), dl])
     }
-    return [...map.entries()]
-      .map(([quality, items]) => ({ quality, items }))
-      .sort((a, b) => qualityRank(b.quality) - qualityRank(a.quality))
+
+    return [...partMap.entries()].map(([partName, qMap]) => {
+      const qualities = [...qMap.entries()]
+        .map(([quality, items]) => ({ quality, items }))
+        .sort((a, b) => qualityRank(b.quality) - qualityRank(a.quality))
+      return {
+        title: partName === 'BATCH' ? 'Download Batch (Semua Episode)' : `Download Batch - ${partName}`,
+        qualities,
+      }
+    })
   }, [batchList])
 
   // Group episode downloads by episode number
@@ -78,23 +104,23 @@ export function SeriesDownloads({ downloads }: { downloads: AnimeDownload[] }) {
   return (
     <div className="flex flex-col gap-4 p-[15px]">
       {/* 1. Batch Downloads (if available) */}
-      {batchGroups.length > 0 && (
-        <div className="rounded-[8px] border border-[#263e60] bg-[#071426] p-4">
+      {batchSections.map(({ title, qualities }, idx) => (
+        <div key={idx} className="rounded-[8px] border border-[#263e60] bg-[#071426] p-4">
           <div className="mb-3 flex items-center gap-2 text-[15px] font-semibold text-white">
             <span className="flex items-center justify-center text-accent">
               <Archive className="h-4 w-4" />
             </span>
-            <strong>Download Batch (Semua Episode)</strong>
+            <strong>{title}</strong>
           </div>
           <div className="flex flex-col gap-2.5">
-            {batchGroups.map(({ quality, items }) => (
+            {qualities.map(({ quality, items }) => (
               <div
                 key={quality}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-[6px] border border-[#1b2e47] bg-[#0b1b30] px-3.5 py-2.5"
               >
                 <div className="flex items-center gap-2">
                   <span className="rounded bg-accent/20 border border-accent/40 px-2 py-0.5 text-[12px] font-bold text-accent uppercase tracking-wider">
-                    BATCH {quality}
+                    {quality}
                   </span>
                   {items[0].size && <span className="text-[11.5px] text-muted">({items[0].size})</span>}
                 </div>
@@ -108,7 +134,7 @@ export function SeriesDownloads({ downloads }: { downloads: AnimeDownload[] }) {
                       className="inline-flex items-center gap-1.5 rounded-[4px] border border-[#2b405f] bg-[#17263e] px-2.5 py-1 text-[12px] font-medium text-white hover:border-accent hover:bg-accent/80 transition-all"
                     >
                       <Download className="h-3 w-3 opacity-70" />
-                      {dl.host.replace(/\s*\(Batch\)/i, '')}
+                      {cleanHost(dl.host)}
                       <span className="text-[10px] text-muted opacity-80">({dl.provider})</span>
                     </a>
                   ))}
@@ -117,7 +143,7 @@ export function SeriesDownloads({ downloads }: { downloads: AnimeDownload[] }) {
             ))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* 2. Episode Downloads (if available) */}
       {episodesByNumber.length > 0 && (
