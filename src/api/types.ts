@@ -40,6 +40,8 @@ export interface Episode {
   officialUrl: string | null
   officialSite: string | null
   airedAt: string | null
+  hasStream?: boolean
+  hasDownload?: boolean
 }
 
 export interface AnimeDetail {
@@ -99,9 +101,14 @@ export interface HomeData {
   popular: AnimeCard[]
 }
 
+export interface AnimeDownload extends EpisodeDownload {
+  episodeNumber?: number
+}
+
 export interface DetailData {
   anime: AnimeDetail
   episodes: Episode[]
+  downloads?: AnimeDownload[]
   recommendations: AnimeCard[]
 }
 

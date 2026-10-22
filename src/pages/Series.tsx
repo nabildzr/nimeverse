@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Youtube } from 'lucide-react'
@@ -9,6 +9,7 @@ import { AltTitles, GenreTags, InfoFacts } from '../components/AnimeInfo'
 import { Box } from '../components/Box'
 import { AnimeCardItem, CardGrid } from '../components/Cards'
 import { EpisodeList } from '../components/EpisodeList'
+import { SeriesDownloads } from '../components/SeriesDownloads'
 import { TwoColumn } from '../components/Layout'
 import { Poster } from '../components/Poster'
 import { Sidebar } from '../components/Sidebar'
@@ -30,9 +31,10 @@ export default function Series() {
   if (isLoading) return <PageLoader />
   if (error || !data) return <ErrorView error={error} retry={refetch} />
 
-  const { anime, episodes, recommendations } = data
-  const first = episodes.at(-1)
-  const last = episodes[0]
+  const { anime, episodes, recommendations, downloads = [] } = data
+  const playableEpisodes = useMemo(() => episodes.filter((e) => e.hasStream), [episodes])
+  const first = playableEpisodes.at(-1)
+  const last = playableEpisodes[0]
   const history = lastWatched(slug)
   const trailer = anime.trailerSite === 'youtube' && anime.trailerId ? anime.trailerId : null
 
@@ -61,7 +63,7 @@ export default function Series() {
               informasi lengkap tersedia di bawah.
             </p>
             <AltTitles anime={anime} />
-            <InfoFacts anime={anime} episodeCount={episodes.length} />
+            <InfoFacts anime={anime} episodeCount={playableEpisodes.length || episodes.length} />
             <GenreTags anime={anime} />
             {anime.nextAiringAt && anime.nextAiringEpisode && (
               <div className="mt-2 inline-block rounded-[3px] bg-item px-3 py-2 text-[13px]">
@@ -79,26 +81,45 @@ export default function Series() {
         </div>
       </Box>
 
-      <Box title={`Watch ${anime.title}`}>
-        {first && last && (
-          <div className="m-2.5 grid grid-cols-2">
-            {[
-              { label: 'First Episode', ep: first },
-              { label: history ? 'Lanjutkan' : 'New Episode', ep: history ? { ...last, number: history.episode } : last },
-            ].map(({ label, ep }) => (
-              <Link
-                key={label}
-                to={watchPath(slug, ep.number)}
-                className="m-[5px] rounded-[5px] bg-nav p-[15px] text-center text-white hover:bg-accent"
-              >
-                <span className="block text-[14px]">{label}</span>
-                <span className="block text-[20px] font-semibold">Episode {ep.number}</span>
-              </Link>
-            ))}
+      {/* Watch section: only rendered if there are playable episodes with streams */}
+      {playableEpisodes.length > 0 && (
+        <Box title={`Watch ${anime.title}`}>
+          {first && last && (
+            <div className="m-2.5 grid grid-cols-2">
+              {[
+                { label: 'First Episode', ep: first },
+                { label: history ? 'Lanjutkan' : 'New Episode', ep: history ? { ...last, number: history.episode } : last },
+              ].map(({ label, ep }) => (
+                <Link
+                  key={label}
+                  to={watchPath(slug, ep.number)}
+                  className="m-[5px] rounded-[5px] bg-nav p-[15px] text-center text-white hover:bg-accent"
+                >
+                  <span className="block text-[14px]">{label}</span>
+                  <span className="block text-[20px] font-semibold">Episode {ep.number}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+          <EpisodeList slug={slug} title={anime.title} episodes={playableEpisodes} />
+        </Box>
+      )}
+
+      {/* Download section on Anime Detail page (Batch & Episode downloads) */}
+      {downloads.length > 0 && (
+        <Box title={`Download ${anime.title}`}>
+          <SeriesDownloads downloads={downloads} />
+        </Box>
+      )}
+
+      {/* When neither streaming episodes nor downloads exist */}
+      {playableEpisodes.length === 0 && downloads.length === 0 && (
+        <Box title="Status Episode & Unduhan">
+          <div className="p-6 text-center text-[13.5px] text-muted">
+            Belum ada video streaming atau link unduhan yang tersedia untuk anime ini di server.
           </div>
-        )}
-        <EpisodeList slug={slug} title={anime.title} episodes={episodes} />
-      </Box>
+        </Box>
+      )}
 
       <Comments target={{ anime: slug }} title="Diskusi" />
 

@@ -45,7 +45,7 @@ export function EpisodeList({ slug, title, episodes }: { slug: string; title: st
             </Link>
           </li>
         ))}
-        {shown.length === 0 && <li className="bg-item px-4 py-6 text-center text-muted">Belum ada episode yang tayang.</li>}
+        {shown.length === 0 && <li className="bg-item px-4 py-6 text-center text-muted">Belum ada episode streaming yang tersedia.</li>}
       </ul>
     </div>
   )
