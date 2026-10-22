@@ -185,26 +185,21 @@ export default function Watch() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 bg-box px-[15px] py-2.5 text-[12.5px]">
             {sources.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="mr-1 text-[12px] font-semibold text-muted">Server:</span>
-                {sources.map((s) => {
-                  const active = s.id === source?.id
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => setSourceId(s.id)}
-                      className={`rounded px-2.5 py-1 text-[12px] font-medium transition-all ${
-                        active
-                          ? 'bg-accent text-white shadow-sm'
-                          : 'border border-[#2b405f] bg-[#17263e] text-text hover:border-accent hover:text-white'
-                      }`}
-                    >
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-muted">Server:</span>
+                <select
+                  aria-label="Pilih server stream"
+                  value={source?.id}
+                  onChange={(e) => setSourceId(Number(e.target.value))}
+                  className="h-8 rounded-[4px] border border-[#2b405f] bg-[#17263e] px-2.5 text-[12.5px] font-medium text-white outline-none focus:border-accent"
+                >
+                  {sources.map((s) => (
+                    <option key={s.id} value={s.id}>
                       {s.label}
                       {s.quality ? ` (${s.quality})` : ''}
-                    </button>
-                  )
-                })}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
             <div className="ml-auto flex flex-wrap items-center gap-4">
