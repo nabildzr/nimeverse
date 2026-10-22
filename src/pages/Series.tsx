@@ -28,8 +28,8 @@ export default function Series() {
   const [showTrailer, setShowTrailer] = useState(false)
   useTitle(data ? `Nonton ${data.anime.title} Subtitle Indonesia` : '')
 
-  const playableEpisodes = useMemo(
-    () => (data?.episodes ? data.episodes.filter((e) => e.hasStream) : []),
+  const hasAnyStream = useMemo(
+    () => (data?.episodes ? data.episodes.some((e) => e.hasStream) : false),
     [data?.episodes],
   )
 
@@ -37,8 +37,8 @@ export default function Series() {
   if (error || !data) return <ErrorView error={error} retry={refetch} />
 
   const { anime, episodes, recommendations, downloads = [] } = data
-  const first = playableEpisodes.at(-1)
-  const last = playableEpisodes[0]
+  const first = episodes.at(-1)
+  const last = episodes[0]
   const history = lastWatched(slug)
   const trailer = anime.trailerSite === 'youtube' && anime.trailerId ? anime.trailerId : null
 
@@ -67,7 +67,7 @@ export default function Series() {
               informasi lengkap tersedia di bawah.
             </p>
             <AltTitles anime={anime} />
-            <InfoFacts anime={anime} episodeCount={playableEpisodes.length || episodes.length} />
+            <InfoFacts anime={anime} episodeCount={episodes.length} />
             <GenreTags anime={anime} />
             {anime.nextAiringAt && anime.nextAiringEpisode && (
               <div className="mt-2 inline-block rounded-[3px] bg-item px-3 py-2 text-[13px]">
@@ -85,8 +85,8 @@ export default function Series() {
         </div>
       </Box>
 
-      {/* Watch section: only rendered if there are playable episodes with streams */}
-      {playableEpisodes.length > 0 && (
+      {/* Watch section: rendered if there are streamable episodes */}
+      {hasAnyStream && (
         <Box title={`Watch ${anime.title}`}>
           {first && last && (
             <div className="m-2.5 grid grid-cols-2">
@@ -105,7 +105,7 @@ export default function Series() {
               ))}
             </div>
           )}
-          <EpisodeList slug={slug} title={anime.title} episodes={playableEpisodes} />
+          <EpisodeList slug={slug} title={anime.title} episodes={episodes} />
         </Box>
       )}
 
@@ -117,7 +117,7 @@ export default function Series() {
       )}
 
       {/* When neither streaming episodes nor downloads exist */}
-      {playableEpisodes.length === 0 && downloads.length === 0 && (
+      {!hasAnyStream && downloads.length === 0 && (
         <Box title="Status Episode & Unduhan">
           <div className="p-6 text-center text-[13.5px] text-muted">
             Belum ada video streaming atau link unduhan yang tersedia untuk anime ini di server.
