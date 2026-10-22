@@ -14,9 +14,11 @@ export function ItemPreview({ item, className = '' }: { item: Pick<Accessory, 'c
   }
   if (item.slot === 'frame') {
     return (
-      <span className={`relative flex h-[88px] w-[88px] items-center justify-center rounded-full bg-box ${className}`}>
-        <span className="h-[56px] w-[56px] rounded-full bg-control" aria-hidden="true" />
-        <AccessoryArt slot="frame" code={item.code} className="absolute inset-0 h-full w-full" />
+      <span className={`relative flex h-[88px] w-[88px] flex-none items-center justify-center ${className}`}>
+        <span className="h-[56px] w-[56px] flex-none rounded-full bg-control" aria-hidden="true" />
+        <span className="pointer-events-none absolute inset-0 flex h-full w-full items-center justify-center">
+          <AccessoryArt slot="frame" code={item.code} className="h-full w-full" />
+        </span>
       </span>
     )
   }

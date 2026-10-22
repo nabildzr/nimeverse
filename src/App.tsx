@@ -21,6 +21,7 @@ const Communities = lazy(() => import('./pages/Communities'))
 const Community = lazy(() => import('./pages/Community'))
 const PostPage = lazy(() => import('./pages/PostPage'))
 const Gacha = lazy(() => import('./pages/Gacha'))
+const Shop = lazy(() => import('./pages/Shop'))
 const Quests = lazy(() => import('./pages/Quests'))
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="lencana" element={<Badges />} />
         <Route path="peringkat" element={<Leaderboard />} />
         <Route path="gacha" element={<Gacha />} />
+        <Route path="toko" element={<Shop />} />
         <Route path="misi" element={<Quests />} />
         <Route path="komunitas" element={<Communities />} />
         <Route path="komunitas/post/:id" element={<PostPage />} />

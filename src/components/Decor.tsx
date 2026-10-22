@@ -2,8 +2,11 @@ import { useEffect, useRef } from 'react'
 import type { AnimationItem } from 'lottie-web'
 import type { AccessorySlot } from '../api/accountTypes'
 import { Avatar } from './Avatar'
+import { CharacterRingEffect } from './CharacterRingEffect'
 
 type Face = Parameters<typeof Avatar>[0]['face']
+
+const STORAGE_BASE = import.meta.env.VITE_STORAGE_URL ? import.meta.env.VITE_STORAGE_URL.replace(/\/$/, '') : ''
 
 // Each animation is its own small chunk, loaded only when somebody wears or previews it.
 const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
@@ -81,6 +84,31 @@ export function AccessoryArt({ slot, code, className = '', cover = false }: { sl
   }, [slot, code, cover])
 
   if (!code) return null
+  if (slot === 'frame' && code === 'chibi') {
+    return (
+      <div aria-hidden="true" className={`pointer-events-none ${className}`}>
+        <img
+          src={`${STORAGE_BASE}/frames/frame-chibi.png`}
+          alt=""
+          className="h-full w-full object-contain animate-chibi-bounce"
+        />
+      </div>
+    )
+  }
+  if (slot === 'frame' && code.startsWith('frame-')) {
+    return (
+      <div aria-hidden="true" className={`pointer-events-none relative ${className}`}>
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <CharacterRingEffect code={code} />
+        </div>
+        <img
+          src={`${STORAGE_BASE}/frames/${code}.png?v=5`}
+          alt=""
+          className="relative z-10 h-full w-full object-contain animate-chibi-bounce"
+        />
+      </div>
+    )
+  }
   return <div ref={box} aria-hidden="true" className={`pointer-events-none ${className}`} />
 }
 

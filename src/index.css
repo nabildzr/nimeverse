@@ -173,3 +173,246 @@ a {
     animation: none;
   }
 }
+
+@keyframes chibi-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-chibi-bounce {
+  animation: chibi-bounce 2.5s ease-in-out infinite;
+}
+
+
+@keyframes stand-aura {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px #8b5cf6) drop-shadow(0 0 10px #7c3aed);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px #a78bfa) drop-shadow(0 0 18px #9333ea);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes float-gogogo {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.8);
+  }
+  25% {
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-6px, -18px, 0) scale(1.15);
+  }
+}
+
+@keyframes timestop-wave {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.92);
+    opacity: 0.8;
+  }
+}
+
+@keyframes hollow-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes domain-slash {
+  0%, 88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 60;
+  }
+  90% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  96% {
+    opacity: 0;
+  }
+}
+
+@keyframes cloud-float {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.03);
+  }
+}
+
+@keyframes divine-heat {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px #e0f2fe) drop-shadow(0 0 14px #38bdf8);
+    opacity: 0.9;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 24px #0284c7);
+    opacity: 1;
+  }
+}
+
+@keyframes shadow-rise {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px #4f46e5) drop-shadow(0 0 12px #312e81);
+    transform: translateY(0);
+  }
+  50% {
+    filter: drop-shadow(0 0 9px #6366f1) drop-shadow(0 0 20px #1e1b4b);
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes solar-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes blade-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes petal-drift {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(3px, -4px) rotate(15deg);
+  }
+}
+
+@keyframes fire-spark {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-8px, -24px) scale(1.1);
+  }
+}
+
+@keyframes flame-burn {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px #ef4444) drop-shadow(0 0 14px #f97316);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 10px #f97316) drop-shadow(0 0 22px #ef4444);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes lightning-flash {
+  0%, 85%, 93%, 100% {
+    opacity: 0;
+  }
+  86%, 92% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #facc15) drop-shadow(0 0 16px #ffffff);
+  }
+}
+
+@keyframes rasengan-swirl {
+  0% {
+    transform: rotate(0deg) scale(0.98);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.02);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.98);
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(45deg);
+    filter: drop-shadow(0 0 6px #facc15);
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes kokusen-burst {
+  0%, 86%, 100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  88%, 94% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes frost-glint {
+  0%, 100% {
+    opacity: 0.3;
+    transform: rotate(0deg) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(90deg) scale(1.1);
+  }
+}
+
+@keyframes alchemy-spark {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
