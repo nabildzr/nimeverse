@@ -28,11 +28,15 @@ export default function Series() {
   const [showTrailer, setShowTrailer] = useState(false)
   useTitle(data ? `Nonton ${data.anime.title} Subtitle Indonesia` : '')
 
+  const playableEpisodes = useMemo(
+    () => (data?.episodes ? data.episodes.filter((e) => e.hasStream) : []),
+    [data?.episodes],
+  )
+
   if (isLoading) return <PageLoader />
   if (error || !data) return <ErrorView error={error} retry={refetch} />
 
   const { anime, episodes, recommendations, downloads = [] } = data
-  const playableEpisodes = useMemo(() => episodes.filter((e) => e.hasStream), [episodes])
   const first = playableEpisodes.at(-1)
   const last = playableEpisodes[0]
   const history = lastWatched(slug)
