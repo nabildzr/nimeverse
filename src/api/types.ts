@@ -148,6 +148,8 @@ export interface ListParams {
   season?: string
   year?: string
   letter?: string
+  /** anime (regular Japanese anime), donghua or short; leave out for everything. */
+  kind?: 'anime' | 'donghua' | 'short'
   order?: string
   page?: number
   perPage?: number

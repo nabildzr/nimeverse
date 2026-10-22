@@ -10,10 +10,16 @@ import { Empty, ErrorView, Pagination } from '../components/States'
 import { FORMAT_OPTIONS, ORDER_OPTIONS, STATUS_OPTIONS, toListQuery } from '../lib/format'
 import { useTitle } from '../lib/useTitle'
 
-type Mode = 'list' | 'search' | 'genre'
+type Mode = 'list' | 'search' | 'genre' | 'kind'
+type Kind = NonNullable<ListParams['kind']>
+
+const KIND_PAGES: Record<Exclude<Kind, 'anime'>, { title: string; path: string; empty: string }> = {
+  donghua: { title: 'Donghua', path: '/donghua', empty: 'Belum ada donghua.' },
+  short: { title: 'TV Short', path: '/tv-short', empty: 'Belum ada TV short.' },
+}
 
 /** Shared grid page for the filter list, search results and genre pages. */
-export default function AnimeList({ mode }: { mode: Mode }) {
+export default function AnimeList({ mode, kind }: { mode: Mode; kind?: Exclude<Kind, 'anime'> }) {
   const [sp] = useSearchParams()
   const { slug } = useParams()
   const page = Math.max(1, Number(sp.get('page')) || 1)
@@ -21,6 +27,7 @@ export default function AnimeList({ mode }: { mode: Mode }) {
   const params: ListParams = {
     q: mode === 'search' ? (sp.get('s') ?? '') : undefined,
     genre: mode === 'genre' ? slug : (sp.get('genre') ?? undefined),
+    kind: mode === 'kind' ? kind : undefined,
     status: sp.get('status') ?? undefined,
     type: sp.get('type') ?? undefined,
     order: sp.get('order') ?? (mode === 'search' ? '' : undefined),
@@ -47,7 +54,9 @@ export default function AnimeList({ mode }: { mode: Mode }) {
   ].filter(Boolean)
 
   const title =
-    mode === 'search'
+    mode === 'kind' && kind
+      ? KIND_PAGES[kind].title
+      : mode === 'search'
       ? `Search '${params.q ?? ''}'`
       : mode === 'genre'
         ? `Genre: ${genreName ?? ''}`
@@ -57,7 +66,7 @@ export default function AnimeList({ mode }: { mode: Mode }) {
   useTitle(title)
 
   const href = (p: number) => {
-    const base = mode === 'genre' ? `/genres/${slug}` : mode === 'search' ? '/search' : '/anime'
+    const base = mode === 'kind' && kind ? KIND_PAGES[kind].path : mode === 'genre' ? `/genres/${slug}` : mode === 'search' ? '/search' : '/anime'
     return `${base}${toListQuery({ s: params.q, genre: mode === 'list' ? params.genre : undefined, status: params.status, type: params.type, order: params.order, page: p })}`
   }
 
@@ -73,7 +82,7 @@ export default function AnimeList({ mode }: { mode: Mode }) {
           {mode === 'search' && !params.q ? (
             <Empty>Ketik judul anime pada kolom pencarian.</Empty>
           ) : !isLoading && data?.items.length === 0 ? (
-            <Empty>Tidak ada anime yang cocok.</Empty>
+            <Empty>{mode === 'kind' && kind ? KIND_PAGES[kind].empty : 'Tidak ada anime yang cocok.'}</Empty>
           ) : (
             <CardGrid>
               {isLoading ? <CardSkeletons count={15} /> : data?.items.map((a, i) => <AnimeCardItem key={a.id} item={a} eager={i < 5} />)}

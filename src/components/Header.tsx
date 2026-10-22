@@ -15,6 +15,8 @@ const MENU = [
   { to: '/az-list', label: 'AZ List' },
   { to: '/jadwal', label: 'Jadwal Rilis' },
   { to: '/genres', label: 'Genres' },
+  { to: '/donghua', label: 'Donghua' },
+  { to: '/tv-short', label: 'TV Short' },
   { to: '/komunitas', label: 'Komunitas' },
   { to: '/peringkat', label: 'Peringkat' },
 ]

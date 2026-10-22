@@ -36,6 +36,8 @@ export default function App() {
         <Route path="genres" element={<Genres />} />
         <Route path="genres/:slug" element={<AnimeList mode="genre" />} />
         <Route path="az-list" element={<AZList />} />
+        <Route path="donghua" element={<AnimeList mode="kind" kind="donghua" />} />
+        <Route path="tv-short" element={<AnimeList mode="kind" kind="short" />} />
         <Route path="jadwal" element={<Schedule />} />
         <Route path="masuk" element={<Login />} />
         <Route path="pengaturan" element={<Settings />} />
