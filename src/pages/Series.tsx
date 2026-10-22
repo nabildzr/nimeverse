@@ -23,7 +23,7 @@ export default function Series() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['anime', slug],
     queryFn: ({ signal }) => api.detail(slug, signal),
-    staleTime: 120_000,
+    staleTime: 30_000,
   })
   const [showTrailer, setShowTrailer] = useState(false)
   useTitle(data ? `Nonton ${data.anime.title} Subtitle Indonesia` : '')
@@ -85,10 +85,10 @@ export default function Series() {
         </div>
       </Box>
 
-      {/* Watch section: rendered if there are streamable episodes */}
-      {hasAnyStream && (
+      {/* Watch section: rendered if there are streamable episodes OR if anime has aired episodes and isn't pure batch-only */}
+      {episodes.length > 0 && (hasAnyStream || downloads.length === 0) && (
         <Box title={`Watch ${anime.title}`}>
-          {first && last && (
+          {first && last && (hasAnyStream || history) && (
             <div className="m-2.5 grid grid-cols-2">
               {[
                 { label: 'First Episode', ep: first },
@@ -116,8 +116,8 @@ export default function Series() {
         </Box>
       )}
 
-      {/* When neither streaming episodes nor downloads exist */}
-      {!hasAnyStream && downloads.length === 0 && (
+      {/* When NO episodes and NO downloads exist */}
+      {episodes.length === 0 && downloads.length === 0 && (
         <Box title="Status Episode & Unduhan">
           <div className="p-6 text-center text-[13.5px] text-muted">
             Belum ada video streaming atau link unduhan yang tersedia untuk anime ini di server.
