@@ -232,13 +232,17 @@ export interface PullResult {
   rarity: Rarity
   duplicate: boolean
   refund: number
+  xp?: number
 }
 
 export interface PullBatch {
   results: PullResult[]
   spent: number
   refunded: number
+  totalXP?: number
   coins: number
+  xp?: number
+  level?: number
   pityEpic: number
   pityLegend: number
   newBadges: BadgeBrief[]
@@ -278,4 +282,21 @@ export interface LiveEvent {
   kind?: 'comment' | 'post'
   id?: number
   score?: number
+}
+
+export interface ShopItem {
+  code: string
+  name: string
+  description: string
+  slot: AccessorySlot
+  rarity: Rarity
+  price: number
+  owned: boolean
+}
+
+export interface DailyShopResponse {
+  date: string
+  resetsInSeconds: number
+  coins: number
+  items: ShopItem[]
 }

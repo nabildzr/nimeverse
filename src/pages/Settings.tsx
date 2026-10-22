@@ -358,6 +358,29 @@ function AccessoryCard({ item, active, onPick, busy }: { item: Accessory; active
   )
 }
 
+const RARITY_RANK: Record<string, number> = {
+  legendary: 4,
+  epic: 3,
+  rare: 2,
+  common: 1,
+}
+
+function sortAccessoriesDescending(items: Accessory[], currentCode?: string): Accessory[] {
+  return [...items].sort((a, b) => {
+    const aActive = a.code === currentCode
+    const bActive = b.code === currentCode
+    if (aActive !== bActive) return aActive ? -1 : 1
+
+    if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1
+
+    const aRank = a.rarity ? (RARITY_RANK[a.rarity] ?? 1) : (a.premium ? 3 : 1)
+    const bRank = b.rarity ? (RARITY_RANK[b.rarity] ?? 1) : (b.premium ? 3 : 1)
+    if (aRank !== bRank) return bRank - aRank
+
+    return a.name.localeCompare(b.name, 'id')
+  })
+}
+
 function AccessoriesForm() {
   const { user, refresh } = useAuth()
   const { data } = useQuery({
@@ -367,6 +390,8 @@ function AccessoriesForm() {
   })
   const [state, setState] = useState({ ok: false, text: '' })
   const [busy, setBusy] = useState(false)
+  const [frameSearch, setFrameSearch] = useState('')
+  const [frameRarity, setFrameRarity] = useState<'all' | 'owned' | 'legendary' | 'epic' | 'rare' | 'common'>('all')
   if (!user) return null
 
   const wear = async (slot: AccessorySlot, code: string) => {
@@ -399,12 +424,27 @@ function AccessoriesForm() {
         . Pilihanmu terlihat oleh semua orang.
       </p>
       {sections.map(({ slot, title, hint, cols }) => {
-        const items = (data?.items ?? []).filter((i) => i.slot === slot)
+        const rawItems = (data?.items ?? []).filter((i) => i.slot === slot)
         const current = worn[slot]
+        const filteredItems = slot === 'frame'
+          ? rawItems.filter((i) => {
+              if (frameRarity === 'owned' && !i.unlocked) return false
+              if (frameRarity !== 'all' && frameRarity !== 'owned' && i.rarity !== frameRarity) return false
+              if (frameSearch.trim()) {
+                const q = frameSearch.toLowerCase().trim()
+                return i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
+              }
+              return true
+            })
+          : rawItems
+        const items = sortAccessoriesDescending(filteredItems, current)
+        const ownedCount = rawItems.filter((i) => i.unlocked).length
         return (
           <section key={slot} className="mb-4">
             <div className="mb-2 flex flex-wrap items-center gap-x-3">
-              <h3 className="text-[14px] font-semibold text-heading">{title}</h3>
+              <h3 className="text-[14px] font-semibold text-heading">
+                {title} <span className="text-[12px] font-normal text-muted">({ownedCount} dimiliki)</span>
+              </h3>
               <span className="text-[12px] text-muted">{hint}</span>
               {current && (
                 <button disabled={busy} onClick={() => void wear(slot, '')} className="ml-auto text-[12.5px] text-muted hover:text-heading">
@@ -412,10 +452,50 @@ function AccessoriesForm() {
                 </button>
               )}
             </div>
+            {slot === 'frame' && (
+              <div className="mb-3 flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={frameSearch}
+                  onChange={(e) => setFrameSearch(e.target.value)}
+                  placeholder="Cari bingkai anime atau karakter (cth. Jotaro, Gojo, Luffy)..."
+                  className="h-8 w-full rounded-[3px] border border-input-border bg-input px-3 text-[12px] text-heading outline-none focus:border-accent"
+                />
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(['all', 'owned', 'legendary', 'epic', 'rare', 'common'] as const).map((r) => {
+                    const count = r === 'all'
+                      ? rawItems.length
+                      : r === 'owned'
+                        ? rawItems.filter((x) => x.unlocked).length
+                        : rawItems.filter((x) => x.rarity === r).length
+                    const label = r === 'all' ? 'Semua' : r === 'owned' ? 'Dimiliki' : r.charAt(0).toUpperCase() + r.slice(1)
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setFrameRarity(r)}
+                        className={`rounded-[3px] px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          frameRarity === r
+                            ? 'bg-accent text-white'
+                            : 'bg-item text-muted hover:bg-item-active hover:text-heading'
+                        }`}
+                      >
+                        {label} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <ul className={`grid gap-2.5 ${cols}`}>
               {items.map((i) => (
                 <AccessoryCard key={i.code} item={i} active={current === i.code} busy={busy} onPick={() => void wear(slot, i.code)} />
               ))}
+              {items.length === 0 && (
+                <li className="col-span-full py-4 text-center text-[12px] text-muted">
+                  Tidak ada bingkai yang cocok dengan pencarian atau filter.
+                </li>
+              )}
             </ul>
           </section>
         )

@@ -18,6 +18,12 @@ describe('AccessoryArt', () => {
   it('tolerates a code this build does not know', () => {
     expect(() => render(<AccessoryArt slot="frame" code="from-the-future" />)).not.toThrow()
   })
+
+  it('renders character frames such as jotaro and dio with stand aura and menacing kanji', () => {
+    const { container } = render(<AccessoryArt slot="frame" code="frame-jotaro" />)
+    expect(container.querySelector('svg')).toBeTruthy()
+    expect(container.textContent).toContain('ゴ')
+  })
 })
 
 describe('FramedAvatar', () => {

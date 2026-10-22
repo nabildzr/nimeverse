@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Award, Bookmark, Coins, Crown, Flame, Gift, LogIn, LogOut, Settings, Target, Trophy, User as UserIcon } from 'lucide-react'
+import { Award, Bookmark, Coins, Crown, Flame, Gift, LogIn, LogOut, Settings, Store, Target, Trophy, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { Avatar, userFace, XpBar } from './Avatar'
 
@@ -70,6 +70,9 @@ export function UserMenu() {
           </Link>
           <Link role="menuitem" to="/misi" onClick={() => setOpen(false)} className={item}>
             <Target className="h-4 w-4" aria-hidden="true" /> Misi harian
+          </Link>
+          <Link role="menuitem" to="/toko" onClick={() => setOpen(false)} className={item}>
+            <Store className="h-4 w-4" aria-hidden="true" /> Toko harian
           </Link>
           <Link role="menuitem" to="/gacha" onClick={() => setOpen(false)} className={item}>
             <Gift className="h-4 w-4" aria-hidden="true" /> Gacha
